@@ -1,0 +1,13 @@
+:root {
+  --zizai-font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+  --zizai-color-bg: #f8fafc;
+  --zizai-color-surface: #ffffff;
+  --zizai-color-text: #0f172a;
+  --zizai-color-muted: #475569;
+  --zizai-color-border: #cbd5e1;
+  --zizai-space-xs: 4px;
+  --zizai-space-sm: 8px;
+  --zizai-space-md: 16px;
+  --zizai-radius-sm: 6px;
+}
+
