@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>第二階段第 1 項：共用外觀獨立能力測試</title>
+    <link id="appearance-contract" rel="stylesheet" href="../../styles/variables.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 2rem;
+        color: var(--ui-color-text, #182230);
+        background: var(--ui-color-page, #f3f5f8);
+        font-family: var(--ui-font-family, sans-serif);
+      }
+
+      main {
+        display: grid;
+        gap: 1rem;
+        max-width: 52rem;
+        margin: 0 auto;
+      }
+
+      #test-results {
+        margin: 0;
+        padding: 1rem 1rem 1rem 2.5rem;
+        border: 1px solid var(--ui-color-border, #cbd5e1);
+        border-radius: var(--ui-radius, 0.75rem);
+        background: var(--ui-color-surface, #fff);
+      }
+
+      #test-summary {
+        font-weight: 600;
+      }
+
+      #test-results li[data-result="fail"] {
+        color: #b42318;
+      }
+
+      #test-results li[data-result="pass"] {
+        color: #067647;
+      }
+
+      #fixtures {
+        display: grid;
+        gap: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>第二階段第 1 項：共用外觀獨立能力測試</h1>
+      <p>本頁直接載入 CSS Variables，不載入平台啟動入口；以獨立消費者及既有基本單元檢查共用外觀介面。</p>
+      <section id="fixtures" aria-label="獨立使用與組合測試區">
+        <div id="appearance-consumer"></div>
+        <div id="local-style-consumer"></div>
+        <div id="existing-unit"></div>
+      </section>
+      <section aria-label="測試結果">
+        <h2>測試結果</h2>
+        <p id="test-summary" role="status">測試執行中…</p>
+        <ol id="test-results"></ol>
+      </section>
+    </main>
+    <script type="module" src="./test-runner.js"></script>
+  </body>
+</html>
