@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>第二階段第 4 項：拖曳調整獨立能力測試</title>
+    <link rel="stylesheet" href="../../styles/variables.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 2rem;
+        color: var(--ui-color-text, #182230);
+        background: var(--ui-color-page, #f3f5f8);
+        font-family: var(--ui-font-family, sans-serif);
+      }
+      main { display: grid; gap: 1rem; max-width: 58rem; margin: 0 auto; }
+      .fixture, #test-results {
+        display: grid;
+        gap: .75rem;
+        margin: 0;
+        padding: 1rem;
+        border: 1px solid var(--ui-color-border, #cbd5e1);
+        border-radius: var(--ui-radius, .75rem);
+        background: var(--ui-color-surface, #fff);
+      }
+      .resize-row { display: flex; align-items: stretch; min-height: 5rem; }
+      .resizable-panel {
+        display: grid;
+        align-content: center;
+        min-width: 4rem;
+        padding: 1rem;
+        overflow: hidden;
+        border: 1px solid var(--ui-color-border, #cbd5e1);
+        background: var(--ui-color-page, #f3f5f8);
+      }
+      .drag-handle {
+        width: 1rem;
+        flex: 0 0 1rem;
+        border: 0;
+        padding: 0;
+        background: var(--ui-color-accent, #64748b);
+        cursor: col-resize;
+        touch-action: none;
+      }
+      .drag-handle:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+      #test-summary { font-weight: 600; }
+      #test-results li[data-result="fail"] { color: #b42318; }
+      #test-results li[data-result="pass"] { color: #067647; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>第二階段第 4 項：拖曳調整獨立能力測試</h1>
+      <p>本頁直接載入拖曳能力及其他既有能力，不載入平台啟動入口。各使用位置自行保存寬度並套用拖曳位移。</p>
+
+      <section class="fixture" aria-label="使用位置 A">
+        <h2>使用位置 A（獨立狀態）</h2>
+        <div class="resize-row">
+          <div class="resizable-panel" id="panel-a" style="width: 180px">A：自行持有寬度</div>
+          <button class="drag-handle" id="handle-a" type="button" aria-label="調整 A 寬度"></button>
+        </div>
+        <output id="width-a">180px</output>
+      </section>
+
+      <section class="fixture" aria-label="使用位置 B">
+        <h2>使用位置 B（獨立狀態）</h2>
+        <div class="resize-row">
+          <div class="resizable-panel" id="panel-b" style="width: 240px">B：自行持有寬度</div>
+          <button class="drag-handle" id="handle-b" type="button" aria-label="調整 B 寬度"></button>
+        </div>
+        <output id="width-b">240px</output>
+      </section>
+
+      <section class="fixture" aria-label="與其他能力組合">
+        <h2>與其他能力組合</h2>
+        <div class="resize-row">
+          <div class="resizable-panel" id="combined-panel" style="width: 200px">
+            <button id="open-close-trigger" type="button" aria-expanded="false">開合能力測試</button>
+            <div id="open-close-content" hidden>由使用位置自行持有的內容</div>
+            <button id="dropdown-trigger" type="button" aria-expanded="false">下拉選單</button>
+            <div id="dropdown-menu" hidden>由使用位置自行提供的選項</div>
+          </div>
+          <button class="drag-handle" id="combined-handle" type="button" aria-label="調整組合區寬度"></button>
+        </div>
+        <output id="combined-width">200px</output>
+      </section>
+
+      <section aria-label="測試結果">
+        <h2>測試結果</h2>
+        <p id="test-summary" role="status">測試執行中…</p>
+        <ol id="test-results"></ol>
+      </section>
+    </main>
+    <script type="module" src="./test-runner.js"></script>
+  </body>
+</html>
