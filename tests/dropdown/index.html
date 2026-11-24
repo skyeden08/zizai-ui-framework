@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>第二階段第 3 項：下拉選單共用能力測試</title>
+    <link rel="stylesheet" href="../../styles/variables.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 2rem;
+        color: var(--ui-color-text, #182230);
+        background: var(--ui-color-page, #f3f5f8);
+        font-family: var(--ui-font-family, sans-serif);
+      }
+      main {
+        display: grid;
+        gap: 1rem;
+        max-width: 52rem;
+        margin: 0 auto;
+      }
+      .fixture, #test-results {
+        display: grid;
+        gap: 0.75rem;
+        margin: 0;
+        padding: 1rem;
+        border: 1px solid var(--ui-color-border, #cbd5e1);
+        border-radius: var(--ui-radius, 0.75rem);
+        background: var(--ui-color-surface, #fff);
+      }
+      .menu {
+        display: grid;
+        justify-items: start;
+        gap: 0.5rem;
+        padding: var(--ui-space-medium, 1rem);
+        border: 1px solid var(--ui-color-border, #cbd5e1);
+        border-radius: var(--ui-radius, 0.75rem);
+        background: var(--ui-color-page, #f3f5f8);
+      }
+      .menu button { color: var(--ui-color-text, #182230); }
+      .panel {
+        padding: var(--ui-space-medium, 1rem);
+        border: 1px solid var(--ui-color-border, #cbd5e1);
+        border-radius: var(--ui-radius, 0.75rem);
+      }
+      #test-summary { font-weight: 600; }
+      #test-results li[data-result="fail"] { color: #b42318; }
+      #test-results li[data-result="pass"] { color: #067647; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>第二階段第 3 項：下拉選單共用能力測試</h1>
+      <p>本頁直接載入下拉選單能力及既有能力，不載入平台啟動入口。兩個使用位置各自提供選項內容、開合狀態及選取狀態。</p>
+
+      <section class="fixture" id="usage-a" aria-label="使用位置 A">
+        <h2>使用位置 A：需求主題</h2>
+        <button id="trigger-a" type="button" aria-controls="menu-a">選擇需求主題</button>
+        <div class="menu" id="menu-a" role="menu" hidden>
+          <button type="button" role="menuitem" data-dropdown-option="需求定位">需求定位</button>
+          <button type="button" role="menuitem" data-dropdown-option="架構確認">架構確認</button>
+        </div>
+        <p>本位置選取值：<output id="selected-a">尚未選取</output></p>
+      </section>
+
+      <section class="fixture" id="usage-b" aria-label="使用位置 B">
+        <h2>使用位置 B：共視標頭</h2>
+        <button id="trigger-b" type="button" aria-controls="menu-b">切換共視標頭</button>
+        <div class="menu" id="menu-b" role="menu" hidden>
+          <button type="button" role="menuitem" data-dropdown-option="專案資訊">專案資訊</button>
+          <button type="button" role="menuitem" data-dropdown-option="工作紀錄">工作紀錄</button>
+          <button type="button" role="menuitem" data-dropdown-option="參考資料">參考資料</button>
+        </div>
+        <p>本位置選取值：<output id="selected-b">尚未選取</output></p>
+      </section>
+
+      <section class="fixture" id="combined-fixture" aria-label="與其他能力組合測試">
+        <h2>與其他能力組合</h2>
+        <button id="combined-trigger" type="button" aria-controls="combined-menu">組合使用位置下拉選單</button>
+        <div class="menu" id="combined-menu" role="menu" hidden>
+          <button type="button" role="menuitem" data-dropdown-option="組合選項">組合選項</button>
+        </div>
+        <button id="open-close-trigger" type="button" aria-controls="open-close-panel" aria-expanded="false">獨立開合能力</button>
+        <div class="panel" id="open-close-panel" hidden>由既有開合能力使用位置自行持有的內容及狀態。</div>
+      </section>
+
+      <section class="fixture" id="existing-unit" aria-label="既有基本單元並存測試">
+        <h2>既有基本單元</h2>
+      </section>
+
+      <section aria-label="測試結果">
+        <h2>測試結果</h2>
+        <p id="test-summary" role="status">測試執行中…</p>
+        <ol id="test-results"></ol>
+      </section>
+    </main>
+    <script type="module" src="./test-runner.js"></script>
+  </body>
+</html>
