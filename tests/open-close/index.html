@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>第二階段第 2 項：開合獨立能力測試</title>
+    <link rel="stylesheet" href="../../styles/variables.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 2rem;
+        color: var(--ui-color-text, #182230);
+        background: var(--ui-color-page, #f3f5f8);
+        font-family: var(--ui-font-family, sans-serif);
+      }
+      main {
+        display: grid;
+        gap: 1rem;
+        max-width: 52rem;
+        margin: 0 auto;
+      }
+      .fixture, #test-results {
+        display: grid;
+        gap: 0.75rem;
+        margin: 0;
+        padding: 1rem;
+        border: 1px solid var(--ui-color-border, #cbd5e1);
+        border-radius: var(--ui-radius, 0.75rem);
+        background: var(--ui-color-surface, #fff);
+      }
+      .fixture button { justify-self: start; }
+      .panel {
+        padding: var(--ui-space-medium, 1rem);
+        border: 1px solid var(--ui-color-border, #cbd5e1);
+        border-radius: var(--ui-radius, 0.75rem);
+        color: var(--ui-color-text, #182230);
+        background: var(--ui-color-page, #f3f5f8);
+      }
+      #test-summary { font-weight: 600; }
+      #test-results li[data-result="fail"] { color: #b42318; }
+      #test-results li[data-result="pass"] { color: #067647; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>第二階段第 2 項：開合獨立能力測試</h1>
+      <p>本頁直接載入開合能力及共用外觀，不載入平台啟動入口。每個使用位置自行持有狀態及內容。</p>
+      <section class="fixture" id="independent-fixture" aria-label="獨立使用測試">
+        <h2>獨立使用</h2>
+        <button id="independent-trigger" type="button" aria-controls="independent-panel">切換獨立內容</button>
+        <div class="panel" id="independent-panel" hidden>獨立使用位置自行持有的內容。</div>
+      </section>
+      <section class="fixture" id="combined-fixture" aria-label="與共用外觀組合測試">
+        <h2>與共用外觀組合</h2>
+        <button id="combined-trigger" type="button" aria-controls="combined-panel">切換組合內容</button>
+        <div class="panel" id="combined-panel" hidden>此使用位置自行持有的內容及狀態；樣式使用共用 CSS Variables。</div>
+      </section>
+      <section class="fixture" id="existing-unit" aria-label="既有基本單元並存測試">
+        <h2>既有基本單元</h2>
+      </section>
+      <section aria-label="測試結果">
+        <h2>測試結果</h2>
+        <p id="test-summary" role="status">測試執行中…</p>
+        <ol id="test-results"></ol>
+      </section>
+    </main>
+    <script type="module" src="./test-runner.js"></script>
+  </body>
+</html>
