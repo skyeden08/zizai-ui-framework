@@ -23,37 +23,36 @@
       }
       #scroll-note { margin-top: 70vh; }
     </style>
-  </head>
-  <body>
-    <main>
-      <h1>上方區獨立測試</h1>
-      <p>本頁只載入版面容器與上方區，不啟動平台入口，也不載入其他區域。</p>
-      <div id="fixture"></div>
-      <h2>測試結果</h2>
-      <pre id="results" aria-live="polite" data-status="loading">測試頁已載入，準備啟動測試…</pre>
-      <p id="scroll-note">捲動頁面可觀察上方區的 sticky 固定效果。</p>
-    </main>
     <script>
       (() => {
-        const results = document.getElementById("results");
         window.__topRegionTestCompleted = 0;
         window.__topRegionTestLines = [];
-        const showError = (message) => {
-          const count = window.__topRegionTestCompleted || 0;
-          const lines = window.__topRegionTestLines || [];
-          results.textContent = [
-            ...lines,
-            `ERROR  ${message}`,
-            `已完成：${count} 項`
-          ].join("\n");
-          results.dataset.status = "error";
+        window.__topRegionReportError = (message) => {
+          const write = () => {
+            const results = document.getElementById("results");
+            if (!results) return;
+            const lines = window.__topRegionTestLines || [];
+            const count = window.__topRegionTestCompleted || 0;
+            results.textContent = [
+              ...lines,
+              `ERROR  ${message}`,
+              `已完成：${count} 項`
+            ].join("\\n");
+            results.dataset.status = "error";
+          };
+          if (document.getElementById("results")) write();
+          else document.addEventListener("DOMContentLoaded", write, { once: true });
         };
 
         window.addEventListener("error", (event) => {
           if (event.target instanceof HTMLScriptElement) {
-            showError(`腳本載入失敗：${event.target.src || "未知來源"}`);
+            window.__topRegionReportError(
+              `腳本載入或模組解析失敗：${event.target.src || "未知來源"}`
+            );
           } else {
-            showError(event.message || "發生未捕捉的執行錯誤");
+            window.__topRegionReportError(
+              event.message || "發生未捕捉的執行錯誤"
+            );
           }
         }, true);
 
@@ -61,15 +60,20 @@
           const reason = event.reason instanceof Error
             ? `${event.reason.name}: ${event.reason.message}`
             : String(event.reason);
-          showError(`未處理的 Promise 錯誤：${reason}`);
+          window.__topRegionReportError(`未處理的 Promise 錯誤：${reason}`);
         });
-
-        const runner = document.createElement("script");
-        runner.type = "module";
-        runner.src = "./test-runner.js";
-        runner.onerror = () => showError("test-runner.js 模組載入失敗");
-        document.body.append(runner);
       })();
     </script>
+  </head>
+  <body>
+    <main>
+      <h1>上方區獨立測試</h1>
+      <p>本頁只載入版面容器與上方區，不啟動平台入口，也不載入其他區域。</p>
+      <div id="fixture"></div>
+      <h2>測試結果</h2>
+      <pre id="results" aria-live="polite" data-status="loading">測試頁已載入，等待 DOM 就緒並啟動測試…</pre>
+      <p id="scroll-note">捲動頁面可觀察上方區的 sticky 固定效果。</p>
+    </main>
+    <script type="module" src="./test-runner.js"></script>
   </body>
 </html>
