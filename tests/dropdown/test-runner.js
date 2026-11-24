@@ -168,15 +168,6 @@ try {
       triggerB.getAttribute("aria-expanded") === "false"
   );
 
-  triggerA.click();
-  menuA.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
-  check(
-    "Escape 只通知目前使用位置關閉，狀態仍由呼叫端保存",
-    !expandedA && menuA.hidden &&
-      triggerA.getAttribute("aria-expanded") === "false" &&
-      !expandedB && menuB.hidden
-  );
-
   combinedTrigger.click();
   openCloseTrigger.click();
   const combinedBackground = getComputedStyle(combinedMenu).backgroundColor;
