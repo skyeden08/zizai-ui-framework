@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>上方區獨立測試</title>
+    <link rel="stylesheet" href="../../styles/variables.css" />
+    <style>
+      body {
+        margin: 0;
+        min-height: 200vh;
+        color: var(--ui-color-text, #182230);
+        font-family: var(--ui-font-family, system-ui, sans-serif);
+      }
+      main { padding: 1rem; }
+      #fixture { min-height: 8rem; }
+      #results {
+        min-height: 8rem;
+        padding: 1rem;
+        white-space: pre-wrap;
+        line-height: 1.6;
+        border: 1px solid var(--ui-color-border, #cbd5e1);
+      }
+      #scroll-note { margin-top: 70vh; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>上方區獨立測試</h1>
+      <p>本頁只載入版面容器與上方區，不啟動平台入口，也不載入其他區域。</p>
+      <div id="fixture"></div>
+      <h2>測試結果</h2>
+      <pre id="results" aria-live="polite" data-status="loading">測試頁已載入，準備啟動測試…</pre>
+      <p id="scroll-note">捲動頁面可觀察上方區的 sticky 固定效果。</p>
+    </main>
+    <script>
+      (() => {
+        const results = document.getElementById("results");
+        window.__topRegionTestCompleted = 0;
+        window.__topRegionTestLines = [];
+        const showError = (message) => {
+          const count = window.__topRegionTestCompleted || 0;
+          const lines = window.__topRegionTestLines || [];
+          results.textContent = [
+            ...lines,
+            `ERROR  ${message}`,
+            `已完成：${count} 項`
+          ].join("\\n");
+          results.dataset.status = "error";
+        };
+
+        window.addEventListener("error", (event) => {
+          if (event.target instanceof HTMLScriptElement) {
+            showError(`腳本載入失敗：${event.target.src || "未知來源"}`);
+          } else {
+            showError(event.message || "發生未捕捉的執行錯誤");
+          }
+        }, true);
+
+        window.addEventListener("unhandledrejection", (event) => {
+          const reason = event.reason instanceof Error
+            ? `${event.reason.name}: ${event.reason.message}`
+            : String(event.reason);
+          showError(`未處理的 Promise 錯誤：${reason}`);
+        });
+
+        const runner = document.createElement("script");
+        runner.type = "module";
+        runner.src = "./test-runner.js";
+        runner.onerror = () => showError("test-runner.js 模組載入失敗");
+        document.body.append(runner);
+      })();
+    </script>
+  </body>
+</html>
