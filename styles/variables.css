@@ -1,0 +1,31 @@
+:root {
+  color-scheme: light;
+  --ui-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ui-color-page: #f3f5f8;
+  --ui-color-surface: #ffffff;
+  --ui-color-text: #182230;
+  --ui-color-muted: #526174;
+  --ui-color-border: #cbd5e1;
+  --ui-color-accent: #2457a6;
+  --ui-space-small: 0.5rem;
+  --ui-space-medium: 1rem;
+  --ui-radius: 0.75rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: var(--ui-space-medium);
+  color: var(--ui-color-text);
+  background: var(--ui-color-page);
+  font-family: var(--ui-font-family);
+}
+
+#app {
+  max-width: 48rem;
+  margin: 3rem auto;
+}
