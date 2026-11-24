@@ -20,7 +20,7 @@ async function startTests() {
       return;
     }
     const summary = `已完成：${completed} 項；通過：${passed}；未通過：${failed}`;
-    results.textContent = [...lines, summary, message].filter(Boolean).join("\\n");
+    results.textContent = [...lines, summary, message].filter(Boolean).join("\n");
     results.dataset.status = message.startsWith("ERROR")
       ? "error"
       : "running";
