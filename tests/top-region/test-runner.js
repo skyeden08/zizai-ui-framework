@@ -1,11 +1,15 @@
-import { LayoutContainer } from "../../src/components/layout-container.js";
-import { TopRegion } from "../../src/components/top-region.js";
-
 const results = document.querySelector("#results");
 const fixture = document.querySelector("#fixture");
 const lines = [];
 let passed = 0;
 let failed = 0;
+
+function render() {
+  if (results) {
+    results.textContent = lines.join("\n");
+    results.dataset.status = failed > 0 ? "failed" : "running";
+  }
+}
 
 function record(name, condition, detail = "") {
   if (condition) {
@@ -15,9 +19,33 @@ function record(name, condition, detail = "") {
     failed += 1;
     lines.push(`FAIL  ${name}${detail ? ` — ${detail}` : ""}`);
   }
+  render();
+}
+
+function describeError(error) {
+  if (error instanceof Error) {
+    return `${error.name}: ${error.message}`;
+  }
+  return String(error);
 }
 
 async function run() {
+  if (!results) {
+    throw new Error('找不到測試結果容器 #results');
+  }
+  if (!fixture) {
+    throw new Error('找不到測試掛載容器 #fixture');
+  }
+
+  lines.push("測試初始化中…");
+  render();
+
+  // Dynamic imports let the page report module-loading failures in #results.
+  const [{ LayoutContainer }, { TopRegion }] = await Promise.all([
+    import("../../src/components/layout-container.js"),
+    import("../../src/components/top-region.js")
+  ]);
+
   if (!customElements.get("zizai-layout-container")) {
     customElements.define("zizai-layout-container", LayoutContainer);
   }
@@ -36,7 +64,8 @@ async function run() {
       region.shadowRoot instanceof ShadowRoot
   );
 
-  const projected = container.shadowRoot.querySelector("slot").assignedElements();
+  const containerSlot = container.shadowRoot?.querySelector("slot");
+  const projected = containerSlot?.assignedElements() ?? [];
   record(
     "上方區透過容器既有插槽組裝，容器不改寫區域結構",
     projected.length === 1 &&
@@ -101,21 +130,32 @@ async function run() {
   );
 
   const originalScrollY = window.scrollY;
-  const regionDocumentTop = region.getBoundingClientRect().top + originalScrollY;
-  window.scrollTo(0, Math.max(200, regionDocumentTop + 100));
-  await new Promise((resolve) => requestAnimationFrame(resolve));
-  const stickyTop = region.getBoundingClientRect().top;
-  record(
-    "實際捲動畫面時上方區維持在視窗頂端",
-    Math.abs(stickyTop) < 1,
-    `實測 top=${stickyTop}px`
-  );
-  window.scrollTo(0, originalScrollY);
+  try {
+    const regionDocumentTop = region.getBoundingClientRect().top + originalScrollY;
+    window.scrollTo(0, Math.max(200, regionDocumentTop + 100));
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    const stickyTop = region.getBoundingClientRect().top;
+    record(
+      "實際捲動畫面時上方區維持在視窗頂端",
+      Math.abs(stickyTop) < 1,
+      `實測 top=${stickyTop}px`
+    );
+  } finally {
+    window.scrollTo(0, originalScrollY);
+  }
 
   lines.push("");
   lines.push(`總計：${passed + failed} 項；通過：${passed}；未通過：${failed}`);
-  results.textContent = lines.join("\\n");
+  render();
   results.dataset.status = failed === 0 ? "passed" : "failed";
 }
 
-run();
+run().catch((error) => {
+  lines.push("");
+  lines.push(`ERROR  測試初始化或執行中斷：${describeError(error)}`);
+  lines.push(`已完成：${passed + failed} 項；通過：${passed}；未通過：${failed}`);
+  render();
+  if (results) {
+    results.dataset.status = "error";
+  }
+});
