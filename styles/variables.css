@@ -1,3 +1,9 @@
+/*
+ * 共用外觀能力介面：
+ * - 本檔只提供可選用的 CSS Custom Properties，不提供元件結構或全域元件選擇器。
+ * - 各單元在自身封裝樣式中按需使用 var(--ui-...)。
+ * - 本檔不接管或覆寫各單元自身的樣式。
+ */
 :root {
   /* 文字 */
   --ui-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
