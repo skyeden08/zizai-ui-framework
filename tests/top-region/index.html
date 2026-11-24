@@ -37,7 +37,7 @@
               ...lines,
               `ERROR  ${message}`,
               `已完成：${count} 項`
-            ].join("\\n");
+            ].join("\n");
             results.dataset.status = "error";
           };
           if (document.getElementById("results")) write();
