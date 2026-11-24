@@ -266,7 +266,9 @@ function runCase(caseId, capabilities) {
 
   caseItem.dataset.status = localFailed === 0 ? "passed" : "failed";
   status.dataset.status = caseItem.dataset.status;
-  status.textContent = localFailed === 0 ? `通過（${localPassed}/${localPassed}）` : `未通過（${localFailed} 項）`;
+  status.textContent = localFailed === 0
+    ? `通過（${localPassed}/${localPassed + localFailed}）`
+    : `未通過（${localPassed}/${localPassed + localFailed}，${localFailed} 項失敗）`;
   if (localFailed === 0) casePassed += 1;
   else caseFailed += 1;
 
