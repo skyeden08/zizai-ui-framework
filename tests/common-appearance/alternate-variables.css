@@ -1,0 +1,19 @@
+/*
+ * 替換測試用樣式表。
+ * 僅重現既有 CSS Variables 介面，不新增或改名正式變數。
+ */
+:root {
+  --ui-font-family: Georgia, serif;
+
+  --ui-color-page: #fef3c7;
+  --ui-color-surface: #fff7ed;
+  --ui-color-text: #101828;
+  --ui-color-muted: #475467;
+  --ui-color-border: #f59e0b;
+  --ui-color-accent: #c026d3;
+
+  --ui-space-small: 0.75rem;
+  --ui-space-medium: 1.25rem;
+
+  --ui-radius: 0.25rem;
+}
