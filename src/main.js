@@ -1,15 +1,5 @@
-import { ExampleElement } from "./components/example-element.js";
+const mountPoint = document.querySelector("#app");
 
-const elementName = "zizai-foundation-example";
-
-if (!customElements.get(elementName)) {
-  customElements.define(elementName, ExampleElement);
-}
-
-const app = document.querySelector("#app");
-
-if (!app) {
+if (!mountPoint) {
   throw new Error('Required mount point "#app" was not found.');
 }
-
-app.replaceChildren(document.createElement(elementName));
