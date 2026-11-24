@@ -1,4 +1,4 @@
-import { TestBasicUnit } from "./components/test-basic-unit.js";
+import { LayoutContainer } from "./components/layout-container.js";
 
 const mountPoint = document.querySelector("#app");
 
@@ -6,21 +6,23 @@ if (!mountPoint) {
   throw new Error('Required mount point "#app" was not found.');
 }
 
-if (!customElements.get("zizai-test-basic-unit")) {
-  customElements.define("zizai-test-basic-unit", TestBasicUnit);
+if (!customElements.get("zizai-layout-container")) {
+  customElements.define("zizai-layout-container", LayoutContainer);
 }
 
-export function mountBasicTestUnit(target) {
+export function mountLayoutContainer(target) {
   if (!(target instanceof HTMLElement)) {
     throw new TypeError("A valid HTMLElement mount target is required.");
   }
 
-  const existingUnit = target.querySelector(":scope > zizai-test-basic-unit");
-  if (existingUnit) return existingUnit;
+  const existingContainer = target.querySelector(
+    ":scope > zizai-layout-container"
+  );
+  if (existingContainer) return existingContainer;
 
-  const unit = document.createElement("zizai-test-basic-unit");
-  target.append(unit);
-  return unit;
+  const container = document.createElement("zizai-layout-container");
+  target.append(container);
+  return container;
 }
 
-mountBasicTestUnit(mountPoint);
+mountLayoutContainer(mountPoint);
