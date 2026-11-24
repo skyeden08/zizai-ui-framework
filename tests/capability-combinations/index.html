@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>第二階段第 7 項：能力組合干擾測試</title>
+    <link rel="stylesheet" href="../../styles/variables.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 2rem;
+        color: var(--ui-color-text, #182230);
+        background: var(--ui-color-page, #f3f5f8);
+        font-family: var(--ui-font-family, sans-serif);
+      }
+      main { display: grid; gap: 1rem; max-width: 76rem; margin: 0 auto; }
+      .intro, .case, #test-results {
+        display: grid;
+        gap: .75rem;
+        margin: 0;
+        padding: 1rem;
+        border: 1px solid var(--ui-color-border, #cbd5e1);
+        border-radius: var(--ui-radius, .75rem);
+        background: var(--ui-color-surface, #fff);
+      }
+      #test-results { padding-left: 2.5rem; }
+      .case[data-status="passed"] { border-color: #067647; }
+      .case[data-status="failed"] { border-color: #b42318; }
+      .case-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: .75rem; }
+      .case-status { font-weight: 700; }
+      .case-status[data-status="passed"] { color: #067647; }
+      .case-status[data-status="failed"] { color: #b42318; }
+      .case-checks { display: grid; gap: .35rem; margin: 0; padding-left: 1.5rem; }
+      .case-checks li[data-result="fail"] { color: #b42318; }
+      .case-checks li[data-result="pass"] { color: #067647; }
+      .fixture { display: grid; gap: .5rem; padding: .75rem; border: 1px dashed var(--ui-color-border); }
+      .appearance-probe { display: inline-block; padding: .5rem; color: var(--ui-color-accent); background: var(--ui-color-surface); }
+      .probe-panel { padding: .5rem; border: 1px solid var(--ui-color-border); }
+      .drag-handle { width: 1rem; min-height: 2rem; border: 0; background: var(--ui-color-accent); touch-action: none; cursor: col-resize; }
+      .drag-row { display: flex; align-items: stretch; gap: .25rem; }
+      [hidden] { display: none !important; }
+      #test-summary { font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>第二階段第 7 項：能力組合干擾測試</h1>
+      <section class="intro">
+        <p>本頁只執行既有四項能力的組合測試，不修改能力職責。涵蓋六種兩兩組合、四種三項組合及四項同時組合。</p>
+        <p>每個組合獨立建立測試情境，逐項顯示狀態、樣式、事件、內容及生命週期檢查結果；失敗項目會標示組合代碼與檢查連接處。</p>
+      </section>
+      <section aria-label="組合測試結果">
+        <h2>各組合測試結果</h2>
+        <p id="test-summary" role="status">測試執行中…</p>
+        <ol id="test-results"></ol>
+      </section>
+    </main>
+    <script type="module" src="./test-runner.js"></script>
+  </body>
+</html>
