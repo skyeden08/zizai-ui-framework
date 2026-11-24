@@ -61,23 +61,12 @@ export function bindDropdown({
     onSelect(option.dataset.dropdownOption, option);
   };
 
-  const handleEscape = (event) => {
-    if (event.key !== "Escape" || !Boolean(getExpanded())) return;
-    onExpandedChange(false);
-    syncDropdownState(trigger, false);
-    trigger.focus();
-  };
-
   trigger.addEventListener("click", handleTriggerClick);
-  trigger.addEventListener("keydown", handleEscape);
   menu.addEventListener("click", handleMenuClick);
-  menu.addEventListener("keydown", handleEscape);
   syncDropdownState(trigger, getExpanded());
 
   return () => {
     trigger.removeEventListener("click", handleTriggerClick);
-    trigger.removeEventListener("keydown", handleEscape);
     menu.removeEventListener("click", handleMenuClick);
-    menu.removeEventListener("keydown", handleEscape);
   };
 }
