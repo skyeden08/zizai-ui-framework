@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ZIZAI UI 基本載入測試</title>
+    <link rel="stylesheet" href="../styles/variables.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 2rem;
+        color: var(--ui-color-text, #182230);
+        background: var(--ui-color-page, #f3f5f8);
+        font-family: var(--ui-font-family, sans-serif);
+      }
+
+      main {
+        display: grid;
+        gap: 1rem;
+        max-width: 48rem;
+        margin: 0 auto;
+      }
+
+      #test-results {
+        margin: 0;
+        padding: 1rem;
+        border: 1px solid var(--ui-color-border, #cbd5e1);
+        border-radius: var(--ui-radius, 0.75rem);
+        background: var(--ui-color-surface, #fff);
+      }
+
+      #test-results li[data-result="fail"] {
+        color: #b42318;
+      }
+
+      #test-results li[data-result="pass"] {
+        color: #067647;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>第一階段第 10 項：測試環境啟動及基本單元載入</h1>
+      <section id="app" aria-label="基本單元測試掛載區"></section>
+      <section>
+        <h2>測試結果</h2>
+        <p id="test-summary" role="status">測試執行中…</p>
+        <ol id="test-results"></ol>
+      </section>
+    </main>
+    <script type="module" src="./test-runner.js"></script>
+  </body>
+</html>
