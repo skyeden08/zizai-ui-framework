@@ -39,6 +39,7 @@ try {
   let selectedB = "";
   let combinedExpanded = false;
   let openCloseExpanded = false;
+  let oldBindingCallbackCalls = 0;
   const contentABefore = menuA.innerHTML;
   const contentBBefore = menuB.innerHTML;
 
@@ -47,10 +48,12 @@ try {
     menu: menuA,
     getExpanded: () => expandedA,
     onExpandedChange(nextExpanded) {
+      oldBindingCallbackCalls += 1;
       expandedA = nextExpanded;
       menuA.hidden = !nextExpanded;
     },
     onSelect(value) {
+      oldBindingCallbackCalls += 1;
       selectedA = value;
       selectedAOutput.textContent = value;
       expandedA = false;
@@ -198,18 +201,19 @@ try {
 
   bindingA();
   const expandedABeforeRemovalClick = expandedA;
+  const oldCallbackCountBeforeRemovalClick = oldBindingCallbackCalls;
   triggerA.click();
   const selectedABeforeRemovalClick = selectedA;
   menuA.querySelector('[data-dropdown-option="需求定位"]').click();
   check(
     "連接可獨立移除，移除後觸發及選項事件均不再呼叫舊回呼",
     expandedA === expandedABeforeRemovalClick &&
-      selectedA === selectedABeforeRemovalClick
+      selectedA === selectedABeforeRemovalClick &&
+      oldBindingCallbackCalls === oldCallbackCountBeforeRemovalClick
   );
 
   let replacementExpanded = false;
   let replacementSelection = "";
-  let oldCallbackCalls = 0;
   const replacementBinding = bindDropdown({
     trigger: triggerA,
     menu: menuA,
@@ -220,6 +224,9 @@ try {
     },
     onSelect(value) {
       replacementSelection = value;
+      replacementExpanded = false;
+      menuA.hidden = true;
+      syncDropdownState(triggerA, replacementExpanded);
     }
   });
   triggerA.click();
@@ -228,7 +235,8 @@ try {
     "移除後可替換為新連接，僅新回呼接收操作",
     replacementExpanded &&
       replacementSelection === "需求定位" &&
-      oldCallbackCalls === 0
+      !replacementExpanded && menuA.hidden &&
+      oldBindingCallbackCalls === oldCallbackCountBeforeRemovalClick
   );
 
   replacementBinding();
