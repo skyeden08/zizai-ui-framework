@@ -63,6 +63,17 @@ try {
       combinedTrigger.getAttribute("aria-expanded") === "false"
   );
 
+  independentExpanded = true;
+  independentPanel.hidden = false;
+  syncOpenCloseState(independentTrigger, independentExpanded);
+  check(
+    "使用位置可在自行更新狀態後同步無障礙狀態",
+    independentTrigger.getAttribute("aria-expanded") === "true"
+  );
+  independentExpanded = false;
+  independentPanel.hidden = true;
+  syncOpenCloseState(independentTrigger, independentExpanded);
+
   const originalIndependentContent = independentPanel.textContent;
   independentTrigger.click();
   check(
