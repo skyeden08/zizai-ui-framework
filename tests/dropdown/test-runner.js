@@ -233,9 +233,9 @@ try {
   menuA.querySelector('[data-dropdown-option="需求定位"]').click();
   check(
     "移除後可替換為新連接，僅新回呼接收操作",
-    replacementExpanded &&
+    !replacementExpanded &&
       replacementSelection === "需求定位" &&
-      !replacementExpanded && menuA.hidden &&
+      menuA.hidden &&
       oldBindingCallbackCalls === oldCallbackCountBeforeRemovalClick
   );
 
