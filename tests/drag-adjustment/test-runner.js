@@ -41,6 +41,8 @@ function pointer(type, pointerId, clientX) {
 
 function drag(handle, pointerId, startX, endX) {
   handle.dispatchEvent(pointer("pointerdown", pointerId, startX));
+  const middleX = startX + (endX - startX) / 2;
+  handle.dispatchEvent(pointer("pointermove", pointerId, middleX));
   handle.dispatchEvent(pointer("pointermove", pointerId, endX));
   handle.dispatchEvent(pointer("pointerup", pointerId, endX));
 }
@@ -55,6 +57,9 @@ try {
   let widthA = 180;
   let widthB = 240;
   let combinedWidth = 200;
+  let dragStartWidthA = widthA;
+  let dragStartWidthB = widthB;
+  let dragStartCombinedWidth = combinedWidth;
   let expanded = false;
   let dropdownExpanded = false;
   let dragAEvents = 0;
@@ -63,26 +68,29 @@ try {
 
   const bindingA = bindDragAdjustment({
     handle: handleA,
+    onDragStart() { dragStartWidthA = widthA; },
     onDrag({ deltaX }) {
       dragAEvents += 1;
-      widthA += deltaX;
+      widthA = dragStartWidthA + deltaX;
       panelA.style.width = `${widthA}px`;
       document.querySelector("#width-a").textContent = `${widthA}px`;
     }
   });
   const bindingB = bindDragAdjustment({
     handle: handleB,
+    onDragStart() { dragStartWidthB = widthB; },
     onDrag({ deltaX }) {
       dragBEvents += 1;
-      widthB += deltaX;
+      widthB = dragStartWidthB + deltaX;
       panelB.style.width = `${widthB}px`;
       document.querySelector("#width-b").textContent = `${widthB}px`;
     }
   });
   const combinedBinding = bindDragAdjustment({
     handle: combinedHandle,
+    onDragStart() { dragStartCombinedWidth = combinedWidth; },
     onDrag({ deltaX }) {
-      combinedWidth += deltaX;
+      combinedWidth = dragStartCombinedWidth + deltaX;
       combinedPanel.style.width = `${combinedWidth}px`;
       document.querySelector("#combined-width").textContent = `${combinedWidth}px`;
     }
@@ -138,12 +146,21 @@ try {
     widthA === 215 && panelA.style.width === "215px"
   );
 
+  const passiveTarget = document.createElement("div");
+  passiveTarget.style.width = "321px";
+  const passiveHandle = document.createElement("button");
+  passiveHandle.setPointerCapture = () => {};
+  let reportedDelta = 0;
+  const passiveBinding = bindDragAdjustment({
+    handle: passiveHandle,
+    onDrag({ deltaX }) { reportedDelta = deltaX; }
+  });
+  drag(passiveHandle, 17, 10, 35);
   check(
-    "能力只回傳拖曳位移，不直接改寫對象寬度或位置",
-    panelA.style.width === "215px" &&
-      panelB.style.width === "280px" &&
-      !("width" in bindDragAdjustment)
+    "能力只回報拖曳位移，不直接改寫被調整對象的寬度或位置",
+    reportedDelta === 25 && passiveTarget.style.width === "321px"
   );
+  passiveBinding();
 
   openCloseTrigger.click();
   dropdownTrigger.click();
@@ -183,7 +200,7 @@ try {
   let replacementDelta = 0;
   const replacementBinding = bindDragAdjustment({
     handle: handleA,
-    onDrag({ deltaX }) { replacementDelta += deltaX; }
+    onDrag({ deltaX }) { replacementDelta = deltaX; }
   });
   drag(handleA, 16, 200, 230);
   check(
