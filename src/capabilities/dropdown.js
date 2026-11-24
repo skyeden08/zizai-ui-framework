@@ -14,7 +14,7 @@ export function syncDropdownState(trigger, expanded) {
  *
  * The caller owns the menu element, option content, open/closed state,
  * selected value, and all resulting content updates.
- * This binding only translates trigger clicks, Escape, and option clicks
+ * This binding only translates trigger clicks and option clicks
  * into caller callbacks. It stores no dropdown state and registers no
  * usage positions. Returns a cleanup function for independent removal
  * or replacement.
