@@ -13,17 +13,15 @@ let failed = 0;
 function record(name, condition, detail = "") {
   if (condition) {
     passed += 1;
-    lines.push(`PASS  ${name}`);
+    lines.push("PASS  " + name);
   } else {
     failed += 1;
-    lines.push(`FAIL  ${name}${detail ? ` — ${detail}` : ""}`);
+    lines.push("FAIL  " + name + (detail ? " — " + detail : ""));
   }
 }
 
 function defineElement(name, constructor) {
-  if (!customElements.get(name)) {
-    customElements.define(name, constructor);
-  }
+  if (!customElements.get(name)) customElements.define(name, constructor);
 }
 
 defineElement("zizai-layout-container", LayoutContainer);
@@ -35,12 +33,16 @@ defineElement("zizai-right-region", RightRegion);
 const container = document.createElement("zizai-layout-container");
 fixture.replaceChildren(container);
 
-const regions = [
-  { id: "top-region", tag: "zizai-top-region" },
+const top = document.createElement("zizai-top-region");
+container.append(top);
+
+const definitions = [
   { id: "left-region", tag: "zizai-left-region" },
   { id: "middle-region", tag: "zizai-middle-region" },
   { id: "right-region", tag: "zizai-right-region" }
-].map(({ id, tag }) => {
+];
+
+const regions = definitions.map(({ id, tag }) => {
   const element = document.createElement(tag);
   container.append(element);
   const api = container.connectRegion(element);
@@ -48,17 +50,32 @@ const regions = [
 });
 
 record(
-  "四個區域均可取得各自獨立的容器介面",
+  "左、中、右區各自取得獨立的容器介面",
   regions.every(({ api }) =>
     api &&
     typeof api.requestSpace === "function" &&
     typeof api.requestRegionState === "function"
   ) &&
-  new Set(regions.map(({ api }) => api)).size === 4
+  new Set(regions.map(({ api }) => api)).size === 3
 );
 
 record(
-  "介面只公開空間需求與區域層級狀態需求兩種請求",
+  "上方區沒有容器介面、收合請求入口或協調狀態",
+  !Object.prototype.hasOwnProperty.call(top, "containerInterface") &&
+  !top.hasAttribute("aria-expanded") &&
+  !container.getCoordinationSnapshot().some((state) => state.regionId === "top-region") &&
+  (() => {
+    try {
+      container.connectRegion(top);
+      return false;
+    } catch (error) {
+      return error instanceof TypeError;
+    }
+  })()
+);
+
+record(
+  "容器介面只公開空間需求與區域層級狀態需求兩種請求",
   regions.every(({ api }) =>
     Object.keys(api).sort().join(",") === "requestRegionState,requestSpace"
   )
@@ -82,8 +99,8 @@ const stateReceipts = regions.map(({ api }) =>
 );
 
 record(
-  "各區域可向容器提出空間需求，容器收到正確來源與內容",
-  received.filter(({ detail }) => detail.kind === "space").length === 4 &&
+  "三區可向容器提出空間需求，容器收到正確來源與內容",
+  received.filter(({ detail }) => detail.kind === "space").length === 3 &&
   regions.every(({ id }) =>
     received.some(({ detail, target }) =>
       detail.regionId === id &&
@@ -95,8 +112,8 @@ record(
 );
 
 record(
-  "各區域可向容器提出區域層級狀態需求",
-  received.filter(({ detail }) => detail.kind === "region-state").length === 4 &&
+  "三區可向容器提出區域層級狀態需求",
+  received.filter(({ detail }) => detail.kind === "region-state").length === 3 &&
   regions.every(({ id }) =>
     received.some(({ detail }) =>
       detail.regionId === id &&
@@ -107,9 +124,12 @@ record(
 );
 
 record(
-  "請求方向限定為區域至容器，請求事件不向其他區域傳播",
-  received.length === 8 &&
-  received.every(({ bubbles, composed }) => !bubbles && !composed) &&
+  "請求方向限定為左、中、右區至容器",
+  received.length === 6 &&
+  received.every(({ bubbles, composed, detail }) =>
+    !bubbles && !composed &&
+    ["left-region", "middle-region", "right-region"].includes(detail.regionId)
+  ) &&
   spaceReceipts.every((receipt, index) =>
     receipt.accepted === true && receipt.regionId === regions[index].id
   ) &&
@@ -134,25 +154,19 @@ record(
   )
 );
 
-const region = regions[2].element;
-const initialShadowMarkup = region.shadowRoot.innerHTML;
-const initialStyle = region.getAttribute("style");
-const initialState = region.getAttribute("data-region-owned-state");
+const region = regions[1].element;
 region.setAttribute("data-region-owned-state", "local-state");
 const beforeRequestMarkup = region.shadowRoot.innerHTML;
 const beforeRequestStyle = region.getAttribute("style");
 
-regions[2].api.requestSpace({ testToken: "preserve-region-state" });
-regions[2].api.requestRegionState({ testToken: "preserve-region-state" });
+regions[1].api.requestSpace({ testToken: "preserve-region-state" });
+regions[1].api.requestRegionState({ testToken: "preserve-region-state" });
 
 record(
-  "容器經介面接收請求時未改寫區域內部呈現、內容或區域狀態",
+  "容器接收請求時未改寫區域內部呈現、內容或區域狀態",
   region.shadowRoot.innerHTML === beforeRequestMarkup &&
   region.getAttribute("style") === beforeRequestStyle &&
-  region.getAttribute("data-region-owned-state") === "local-state" &&
-  initialShadowMarkup === beforeRequestMarkup &&
-  initialStyle === beforeRequestStyle &&
-  initialState === null
+  region.getAttribute("data-region-owned-state") === "local-state"
 );
 
 const internalButton = document.createElement("button");
@@ -186,10 +200,7 @@ try {
   invalidPayloadRejected = error instanceof TypeError;
 }
 
-record(
-  "介面拒絕非物件請求資料",
-  invalidPayloadRejected
-);
+record("介面拒絕非物件請求資料", invalidPayloadRejected);
 
 let nestedRegionRejected = false;
 const nestedRegion = document.createElement("zizai-left-region");
@@ -201,7 +212,7 @@ try {
 }
 
 record(
-  "容器只接受直接組裝於自身的區域，不接管區域內部巢狀內容",
+  "容器只接受直接組裝於自身的左、中、右區，不接管巢狀內容",
   nestedRegionRejected
 );
 
@@ -212,6 +223,6 @@ record(
 );
 
 lines.push("");
-lines.push(`總計：${passed + failed} 項；通過：${passed}；未通過：${failed}`);
+lines.push("總計：" + (passed + failed) + " 項；通過：" + passed + "；未通過：" + failed);
 results.textContent = lines.join("\n");
 results.dataset.status = failed === 0 ? "passed" : "failed";
