@@ -1,17 +1,27 @@
+import { bindOpenClose } from "../capabilities/open-close.js";
+import { bindDragAdjustment } from "../capabilities/drag-adjustment.js";
+
 /**
- * Independent right region (shared-view region) for the desktop UI frame.
- *
- * This establishes only the region's own presentation boundary and a
- * neutral mounting slot. The region owns its internal presentation and
- * operations; the layout container must not take them over.
- *
- * The dropdown header, common toolbar, shared content area, device
- * adaptation, and cross-region connections are intentionally deferred.
+ * 右側區（共視區） owns its collapse state, width state, and operation triggers.
+ * It reports only region-level requests through its existing one-way interface.
  */
 export class RightRegion extends HTMLElement {
-  connectedCallback() {
-    if (this.shadowRoot) return;
+  #expanded = true;
+  #width = null;
+  #dragStartWidth = null;
+  #bindings = [];
 
+  connectedCallback() {
+    if (!this.shadowRoot) this.#build();
+    if (this.#bindings.length === 0) this.#bindControls();
+  }
+
+  disconnectedCallback() {
+    for (const cleanup of this.#bindings) cleanup();
+    this.#bindings = [];
+  }
+
+  #build() {
     const root = this.attachShadow({ mode: "open" });
     const style = document.createElement("style");
     style.textContent = `
@@ -22,37 +32,149 @@ export class RightRegion extends HTMLElement {
         min-height: 0;
       }
 
-      .surface {
+      .region-frame {
+        position: relative;
         box-sizing: border-box;
+        width: 100%;
         min-width: 0;
         min-height: 0;
         padding: var(--ui-space-small, 0.5rem);
         color: var(--ui-color-muted, #526174);
         background: var(--ui-color-surface, #ffffff);
-        border-inline-start: 1px solid var(--ui-color-border, #cbd5e1);
         font-family: var(--ui-font-family, system-ui, sans-serif);
       }
 
-      slot {
-        display: block;
+      .region-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--ui-space-small, 0.5rem);
+        min-width: 0;
+      }
+
+      .region-label {
+        min-width: 0;
+        white-space: nowrap;
+      }
+
+      .collapse-toggle {
+        flex: none;
+      }
+
+      .region-content {
+        box-sizing: border-box;
+        min-width: 0;
+        min-height: 0;
+        margin-block-start: var(--ui-space-small, 0.5rem);
+      }
+
+      .region-content[hidden] {
+        display: none;
       }
 
       .placeholder {
         margin: 0;
       }
+
+      .conversation,
+      .input-area {
+        box-sizing: border-box;
+        min-width: 0;
+      }
+
+      .input-area {
+        margin-block-start: var(--ui-space-small, 0.5rem);
+      }
+
+      .resize-handle {
+        position: absolute;
+        inset-block: 0;
+        inset-inline-start: 0;
+        inline-size: 0.5rem;
+        cursor: col-resize;
+        touch-action: none;
+        user-select: none;
+      }
+
+      .resize-handle:focus-visible {
+        outline: 2px solid var(--ui-color-accent, #2563eb);
+        outline-offset: -2px;
+      }
     `;
 
-    const surface = document.createElement("section");
-    surface.className = "surface";
-    surface.setAttribute("aria-label", "右側區（共視區）");
+    const frame = document.createElement("section");
+    frame.className = "region-frame";
+    frame.setAttribute("aria-label", "右側區（共視區）");
 
-    const contentSlot = document.createElement("slot");
+    const toolbar = document.createElement("header");
+    toolbar.className = "region-toolbar";
+
+    const label = document.createElement("span");
+    label.className = "region-label";
+    label.textContent = "右側區（共視區）";
+
+    const toggle = document.createElement("button");
+    toggle.className = "collapse-toggle";
+    toggle.type = "button";
+    toggle.dataset.role = "collapse-toggle";
+    toggle.setAttribute("aria-controls", "region-content");
+    toggle.textContent = "收合";
+
+    toolbar.append(label, toggle);
+
+    const content = document.createElement("div");
+    content.className = "region-content";
+    content.id = "region-content";
+    const slot = document.createElement("slot");
     const placeholder = document.createElement("p");
     placeholder.className = "placeholder";
     placeholder.textContent = "右側區內容尚未建立";
-    contentSlot.append(placeholder);
+    slot.append(placeholder);
+    content.append(slot);
 
-    surface.append(contentSlot);
-    root.append(style, surface);
+    const resizeHandle = document.createElement("div");
+    resizeHandle.className = "resize-handle";
+    resizeHandle.dataset.role = "resize-handle";
+    resizeHandle.setAttribute("role", "separator");
+    resizeHandle.setAttribute("aria-orientation", "vertical");
+    resizeHandle.setAttribute("aria-label", "調整右側區（共視區）寬度");
+    resizeHandle.tabIndex = 0;
+
+    frame.append(toolbar, content, resizeHandle);
+    root.append(style, frame);
+  }
+
+  #bindControls() {
+    const toggle = this.shadowRoot.querySelector('[data-role="collapse-toggle"]');
+    const content = this.shadowRoot.querySelector("#region-content");
+    const resizeHandle = this.shadowRoot.querySelector('[data-role="resize-handle"]');
+
+    this.#bindings.push(
+      bindOpenClose({
+        trigger: toggle,
+        getExpanded: () => this.#expanded,
+        onExpandedChange: (nextExpanded) => {
+          this.containerInterface?.requestRegionState({
+            collapsed: !nextExpanded
+          });
+          this.#expanded = nextExpanded;
+          content.hidden = !nextExpanded;
+        }
+      })
+    );
+
+    this.#bindings.push(
+      bindDragAdjustment({
+        handle: resizeHandle,
+        onDragStart: () => {
+          this.#dragStartWidth = this.#width ?? this.getBoundingClientRect().width;
+        },
+        onDrag: ({ deltaX }) => {
+          const direction = -1;
+          this.#width = this.#dragStartWidth + deltaX * direction;
+          this.containerInterface?.requestSpace({ width: this.#width });
+        }
+      })
+    );
   }
 }
