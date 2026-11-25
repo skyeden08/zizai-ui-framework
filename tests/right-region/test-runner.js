@@ -135,7 +135,7 @@ async function startTests() {
           const output = region.querySelector("output");
           return output?.textContent === "1" &&
             container.shadowRoot.querySelector("output") === null &&
-            container.querySelector("output") === null;
+            !container.hasAttribute("data-operation-state");
         }
       },
       {
