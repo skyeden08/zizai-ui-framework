@@ -1,7 +1,6 @@
 import { createRegionContainerInterface } from "../interfaces/region-container-interface.js";
 
 const REGION_ROLES = new Map([
-  ["zizai-top-region", "top-region"],
   ["zizai-left-region", "left-region"],
   ["zizai-middle-region", "middle-region"],
   ["zizai-right-region", "right-region"]
