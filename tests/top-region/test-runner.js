@@ -94,6 +94,17 @@ async function startTests() {
     const container = document.createElement("zizai-layout-container");
     const top = document.createElement("zizai-top-region");
 
+    const containerTag = container.localName;
+    const registeredContainer = customElements.get(containerTag);
+    lines.push(
+      "DEBUG 容器標籤名稱：" + containerTag,
+      "DEBUG customElements.get(容器標籤名稱) 有值：" + Boolean(registeredContainer),
+      "DEBUG typeof container.connectRegion：" + typeof container.connectRegion,
+      "DEBUG 註冊建構子是否等於匯入的 LayoutContainer：" + (registeredContainer === LayoutContainer),
+      "DEBUG typeof LayoutContainer.prototype.connectRegion：" + typeof LayoutContainer.prototype.connectRegion
+    );
+    render("已輸出容器自訂元件升級診斷；接續執行測試…");
+
     container.append(top);
     const regions = sideDefinitions.map(({ id, tag }) => {
       const element = document.createElement(tag);
