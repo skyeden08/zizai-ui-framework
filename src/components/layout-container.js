@@ -44,7 +44,11 @@ export class LayoutContainer extends HTMLElement {
         grid-template-rows: auto auto;
       }
 
-      slot {\n        display: contents;\n      }\n\n      ::slotted(zizai-top-region) {
+      slot {
+        display: contents;
+      }
+
+      ::slotted(zizai-top-region) {
         grid-area: top;
       }
 
