@@ -71,6 +71,13 @@ async function startTests() {
       `實際提示：${top.shadowRoot.querySelector(".placeholder")?.textContent ?? "不存在"}`
     );
 
+    record(
+      "上方區未提前建立收合控制或收合狀態",
+      top.shadowRoot.querySelector("button, [aria-expanded], [data-role='collapse-toggle']") === null &&
+      top.getAttribute("aria-expanded") === null,
+      "上方區自身呈現中沒有收合控制或收合狀態"
+    );
+
     const surface = top.shadowRoot.querySelector(".surface");
     const button = document.createElement("button");
     button.type = "button";
@@ -121,14 +128,6 @@ async function startTests() {
       !snapshotBefore.some((item) => item.regionId === "top-region") &&
       !snapshotAfter.some((item) => item.regionId === "top-region"),
       `呼叫前介面=${hasTopInterfaceBefore}；拒絕連接=${rejected}；呼叫後介面=${hasTopInterfaceAfter}`
-    );
-
-    record(
-      "上方區未提前建立收合控制或收合狀態",
-      top.shadowRoot.querySelector("button:not(:scope button)") === null &&
-      top.shadowRoot.querySelector("[aria-expanded], [data-role='collapse-toggle']") === null &&
-      top.getAttribute("aria-expanded") === null,
-      "本項只驗證上方區未提供收合控制"
     );
 
     render(`測試結束：${failed === 0 ? "全部通過" : "有項目未通過"}`);
