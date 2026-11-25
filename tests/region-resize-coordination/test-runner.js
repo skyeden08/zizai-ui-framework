@@ -42,18 +42,6 @@ async function startTests(){
    record(name,pairOk&&thirdOk&&outerOk,`前：${fmt(before)}；後：${fmt(after)}；兩區總寬：${pairBefore.toFixed(1)} → ${pairAfter.toFixed(1)}；第三區不變：${thirdOk}；外側固定：${outerOk}`);
    return after;
   };
-  let current=await check("左／中分隔線往右：左變寬、中變窄，右不變",left,(initial[0]+initial[1])*0.08,101,initial,0,1,2);
-  current=await check("左／中分隔線往左：左變窄、中變寬，右不變",left,-(current[0]+current[1])*0.04,102,current,0,1,2);
-  current=await check("中／右分隔線往右：中變寬、右變窄，左不變",middle,(current[1]+current[2])*0.06,103,current,1,2,0);
-  current=await check("中／右分隔線往左：中變窄、右變寬，左不變",middle,-(current[1]+current[2])*0.03,104,current,1,2,0);
-  // Repeat collapse/expand after both dividers have written pixel tracks.
-  await collapseOne(0,"左側區","拖曳後");
-  await collapseOne(1,"中間區","拖曳後");
-  await collapseOne(2,"右側區","拖曳後");
-  await collapseTwo(0,1,"左側區＋中間區");
-  await collapseTwo(0,2,"左側區＋右側區");
-  await collapseTwo(1,2,"中間區＋右側區");
-  record("整體版面寬度及左右外側邊界固定",close(container.getBoundingClientRect().width,containerWidth)&&close(left.getBoundingClientRect().left,leftEdge)&&close(right.getBoundingClientRect().right,rightEdge));
   const regions=[left,middle,right];
   const contents=regions.map(r=>r.shadowRoot.querySelector(".region-content"));
   const outerEdgesFixed=()=>close(container.getBoundingClientRect().width,containerWidth)&&
@@ -101,6 +89,18 @@ async function startTests(){
   await collapseOne(0,"左側區","未拖曳時");
   await collapseOne(1,"中間區","未拖曳時");
   await collapseOne(2,"右側區","未拖曳時");
+  let current=await check("左／中分隔線往右：左變寬、中變窄，右不變",left,(initial[0]+initial[1])*0.08,101,initial,0,1,2);
+  current=await check("左／中分隔線往左：左變窄、中變寬，右不變",left,-(current[0]+current[1])*0.04,102,current,0,1,2);
+  current=await check("中／右分隔線往右：中變寬、右變窄，左不變",middle,(current[1]+current[2])*0.06,103,current,1,2,0);
+  current=await check("中／右分隔線往左：中變窄、右變寬，左不變",middle,-(current[1]+current[2])*0.03,104,current,1,2,0);
+  // Repeat collapse/expand after both dividers have written pixel tracks.
+  await collapseOne(0,"左側區","拖曳後");
+  await collapseOne(1,"中間區","拖曳後");
+  await collapseOne(2,"右側區","拖曳後");
+  await collapseTwo(0,1,"左側區＋中間區");
+  await collapseTwo(0,2,"左側區＋右側區");
+  await collapseTwo(1,2,"中間區＋右側區");
+  record("整體版面寬度及左右外側邊界固定",close(container.getBoundingClientRect().width,containerWidth)&&close(left.getBoundingClientRect().left,leftEdge)&&close(right.getBoundingClientRect().right,rightEdge));
   record("三區獨立垂直捲動設定維持",contents.every(el=>getComputedStyle(el).overflowY==="auto"));
   const topPosition=getComputedStyle(top).position,cs=getComputedStyle(container);
   record("上方區固定與 column-gap 分隔線設定維持",topPosition==="sticky"&&cs.columnGap==="1px",`上方區 position=${topPosition}；column-gap=${cs.columnGap}`);
