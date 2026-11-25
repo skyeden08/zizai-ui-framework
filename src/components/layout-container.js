@@ -211,19 +211,34 @@ export class LayoutContainer extends HTMLElement {
           item
         ])
       );
-      const pairWidth = pairRoles.reduce((total, pairRole) => {
-        const pairRegion = regionsByRole.get(pairRole);
-        return total + (pairRegion?.getBoundingClientRect().width ?? 0);
-      }, 0);
-      const requestedWidth = Math.min(payload.width, pairWidth);
-      const companionWidth = Math.max(0, pairWidth - requestedWidth);
       const companionRole = pairRoles.find((pairRole) => pairRole !== role);
-      const requestedRecord = coordinationRecords.get(this).get(
-        regionsByRole.get(role)
+      const requestedRegion = regionsByRole.get(role);
+      const companionRegion = regionsByRole.get(companionRole);
+      const requestedRecord = coordinationRecords.get(this).get(requestedRegion);
+      const companionRecord = coordinationRecords.get(this).get(companionRegion);
+      const renderedWidth = (item, itemRecord) =>
+        Number.isFinite(itemRecord?.trackWidth)
+          ? itemRecord.trackWidth
+          : item?.getBoundingClientRect().width ?? 0;
+
+      const requestedCurrentWidth = renderedWidth(requestedRegion, requestedRecord);
+      const companionCurrentWidth = renderedWidth(companionRegion, companionRecord);
+      const pairTotalWidth = requestedCurrentWidth + companionCurrentWidth;
+
+      // Region controls send an absolute width based on their drag-start width.
+      // Convert each request into a delta from the previous request, then apply
+      // that delta to the current track width. This keeps the pair total fixed
+      // and also handles a region whose width was changed as its neighbor's
+      // companion track during an earlier drag.
+      const previousRequestedWidth = Number.isFinite(record.spaceRequest?.width)
+        ? record.spaceRequest.width
+        : requestedCurrentWidth;
+      const dragDelta = payload.width - previousRequestedWidth;
+      const requestedWidth = Math.max(
+        0,
+        Math.min(pairTotalWidth, requestedCurrentWidth + dragDelta)
       );
-      const companionRecord = coordinationRecords.get(this).get(
-        regionsByRole.get(companionRole)
-      );
+      const companionWidth = pairTotalWidth - requestedWidth;
 
       if (requestedRecord) requestedRecord.trackWidth = requestedWidth;
       if (companionRecord) companionRecord.trackWidth = companionWidth;
