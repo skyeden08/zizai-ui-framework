@@ -68,14 +68,13 @@ async function startTests() {
 
     render("測試程式已啟動；正在載入必要元件…");
 
-    const container = document.createElement("zizai-layout-container");
-    const top = document.createElement("zizai-top-region");
     const sideDefinitions = [
       { id: "left-region", tag: "zizai-left-region" },
       { id: "middle-region", tag: "zizai-middle-region" },
       { id: "right-region", tag: "zizai-right-region" }
     ];
 
+    // Register every custom element before creating any of them.
     if (!customElements.get("zizai-layout-container")) {
       customElements.define("zizai-layout-container", LayoutContainer);
     }
@@ -91,6 +90,9 @@ async function startTests() {
     if (!customElements.get("zizai-right-region")) {
       customElements.define("zizai-right-region", RightRegion);
     }
+
+    const container = document.createElement("zizai-layout-container");
+    const top = document.createElement("zizai-top-region");
 
     container.append(top);
     const regions = sideDefinitions.map(({ id, tag }) => {
@@ -267,8 +269,8 @@ async function startTests() {
       ? error.name + ": " + error.message
       : String(error);
     lines.push("ERROR  " + message);
-    render("已中止；已完成 " + completed + " 項");
-    results.dataset.status = "error";
+    render("ERROR 已中止；已完成 " + completed + " 項；原因：" + message);
+    if (results) results.dataset.status = "error";
   }
 }
 
