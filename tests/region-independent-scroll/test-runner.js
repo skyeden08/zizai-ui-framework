@@ -9,17 +9,11 @@ const fixture = document.querySelector("#fixture");
 const lines = [];
 let passed = 0;
 let failed = 0;
-let pending = 0;
 
 function record(name, condition, detail = "") {
   lines.push(`${condition ? "PASS" : "FAIL"}  ${name}${condition || !detail ? "" : " — " + detail}`);
   if (condition) passed += 1;
   else failed += 1;
-}
-
-function defer(name, reason) {
-  lines.push(`待定  ${name} — ${reason}`);
-  pending += 1;
 }
 
 function defineElement(name, constructor) {
@@ -43,6 +37,7 @@ try {
   defineElement("zizai-right-region", RightRegion);
 
   const container = document.createElement("zizai-layout-container");
+  container.style.height = "100%";
   fixture.replaceChildren(container);
 
   const top = document.createElement("zizai-top-region");
@@ -77,7 +72,7 @@ try {
   }));
 
   record(
-    "左、中、右區各自具有獨立的內容捲動視窗",
+    "左、中、右區各自具有獨立的內容垂直捲動視窗",
     scrollers.every(({ viewport }) =>
       viewport instanceof HTMLElement &&
       getComputedStyle(viewport).overflowY === "auto" &&
@@ -93,7 +88,7 @@ try {
       .filter((item) => item !== target)
       .every((item) => item.viewport.scrollTop === 0);
     record(
-      `${target.id} 捲動只改變自身捲動位置`,
+      `${target.id} 捲動只改變自身位置`,
       targetMoved && othersStayed,
       `自身 scrollTop=${target.viewport.scrollTop}；其他區維持 0`
     );
@@ -112,14 +107,45 @@ try {
       rightViewport.scrollTop === 83
   );
 
-  const requestCountBefore = container.getCoordinationSnapshot()
+  const middleRootChildren = Array.from(middle.shadowRoot.childNodes);
+  const middleContentChildren = Array.from(middleViewport.childNodes);
+  const leftRequest = left.containerInterface.requestSpace({ width: 180 });
+  const rightRequest = right.containerInterface.requestSpace({ width: 220 });
+  const containerRect = container.getBoundingClientRect();
+  const leftRect = left.getBoundingClientRect();
+  const middleRect = middle.getBoundingClientRect();
+  const rightRect = right.getBoundingClientRect();
+  const expectedMiddleWidth = containerRect.width - leftRect.width - rightRect.width;
+  const geometryTolerance = 2;
+
+  record(
+    "中間區以 1fr 取得左、右區配置後的全部剩餘寬度",
+    leftRequest.accepted === true &&
+      rightRequest.accepted === true &&
+      Math.abs(leftRect.width - 180) <= geometryTolerance &&
+      Math.abs(rightRect.width - 220) <= geometryTolerance &&
+      middleRect.width > 0 &&
+      Math.abs(middleRect.width - expectedMiddleWidth) <= geometryTolerance,
+    `容器=${containerRect.width.toFixed(1)}px；左=${leftRect.width.toFixed(1)}px；中=${middleRect.width.toFixed(1)}px；右=${rightRect.width.toFixed(1)}px；中間預期剩餘=${expectedMiddleWidth.toFixed(1)}px`
+  );
+
+  record(
+    "容器調整 Grid 軌道前後未改動中間區內部節點",
+    middleRootChildren.length === middle.shadowRoot.childNodes.length &&
+      middleRootChildren.every((node, index) => node === middle.shadowRoot.childNodes[index]) &&
+      middleContentChildren.length === middleViewport.childNodes.length &&
+      middleContentChildren.every((node, index) => node === middleViewport.childNodes[index])
+  );
+
+  const requestCountBeforeOperation = container.getCoordinationSnapshot()
     .reduce((total, item) => total + item.requestCount, 0);
   input.click();
-  const requestCountAfter = container.getCoordinationSnapshot()
+  const requestCountAfterOperation = container.getCoordinationSnapshot()
     .reduce((total, item) => total + item.requestCount, 0);
   record(
-    "中間區內部操作由自身處理，不因操作而改變容器協調狀態",
-    middleOperationCount === 1 && requestCountAfter === requestCountBefore
+    "中間區內部操作由中間區自身處理，不觸發容器協調請求",
+    middleOperationCount === 1 &&
+      requestCountAfterOperation === requestCountBeforeOperation
   );
 
   const sourcePaths = [
@@ -139,7 +165,7 @@ try {
   const source = new Map(sourceEntries);
 
   record(
-    "三區沿用第 9 項既有 bindOpenClose 與 bindDragAdjustment",
+    "三區沿用第 9 項既有開合及拖曳能力",
     ["left-region.js", "middle-region.js", "right-region.js"].every((name) =>
       source.get(name).includes("bindOpenClose({") &&
       source.get(name).includes("bindDragAdjustment({")
@@ -147,7 +173,7 @@ try {
   );
 
   record(
-    "三區沿用既有單向介面 requestSpace 與 requestRegionState",
+    "三區沿用第 9 項既有 requestSpace／requestRegionState 單向介面",
     ["left-region.js", "middle-region.js", "right-region.js"].every((name) =>
       source.get(name).includes("containerInterface?.requestSpace") &&
       source.get(name).includes("containerInterface?.requestRegionState")
@@ -156,22 +182,25 @@ try {
     source.get("region-container-interface.js").includes('send("region-state", stateRequest)')
   );
 
+  const containerSource = source.get("layout-container.js");
   record(
-    "容器仍只處理區域請求並調整自身版面，不直接操作區域內部",
-    source.get("layout-container.js").includes("#receiveRegionRequest") &&
-      source.get("layout-container.js").includes("#applyRegionLayout") &&
-      !/region\.(?:shadowRoot|hidden|setAttribute|removeAttribute)/.test(source.get("layout-container.js"))
+    "容器只調整自身 Grid 軌道，未新增 JS 剩餘空間量測公式",
+    containerSource.includes('grid-template-columns: auto minmax(0, 1fr) auto;') &&
+      containerSource.includes('return "minmax(0, 1fr)";') &&
+      !containerSource.includes("ResizeObserver") &&
+      !containerSource.includes("clientWidth") &&
+      !containerSource.includes("scrollWidth")
   );
 
-  defer(
-    "中間區取得左、右區配置後的剩餘水平空間",
-    "規劃書未明定剩餘空間的具體計算方式；本次不自行選定算法，也不以靜態檢查代替實測。"
+  record(
+    "容器未直接存取或操作中間區內部呈現與內容",
+    !/region\.shadowRoot|region-content|innerHTML|textContent|\.hidden\s*=/.test(containerSource)
   );
 
   lines.push("");
-  lines.push(`總計：${passed + failed + pending} 項；通過：${passed}；未通過：${failed}；待定：${pending}`);
+  lines.push(`總計：${passed + failed} 項；通過：${passed}；未通過：${failed}`);
   results.textContent = lines.join("\n");
-  results.dataset.status = failed > 0 ? "failed" : pending > 0 ? "pending" : "passed";
+  results.dataset.status = failed > 0 ? "failed" : "passed";
 } catch (error) {
   failed += 1;
   results.textContent = `測試中止：${error instanceof Error ? error.message : String(error)}`;
