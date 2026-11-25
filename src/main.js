@@ -41,7 +41,7 @@ export function mountLayoutContainer(target) {
   return container;
 }
 
-export function mountTopRegion(container) {
+function mountRegion(container, selector, tagName) {
   if (
     !(container instanceof HTMLElement) ||
     !container.matches("zizai-layout-container")
@@ -49,62 +49,31 @@ export function mountTopRegion(container) {
     throw new TypeError("A valid layout container is required.");
   }
 
-  const existingRegion = container.querySelector(":scope > zizai-top-region");
-  if (existingRegion) return existingRegion;
+  const existingRegion = container.querySelector(`:scope > ${selector}`);
+  const region = existingRegion ?? document.createElement(tagName);
 
-  const region = document.createElement("zizai-top-region");
-  container.append(region);
+  if (!existingRegion) {
+    container.append(region);
+  }
+
+  container.connectRegion(region);
   return region;
+}
+
+export function mountTopRegion(container) {
+  return mountRegion(container, "zizai-top-region", "zizai-top-region");
 }
 
 function mountLeftRegion(container) {
-  if (
-    !(container instanceof HTMLElement) ||
-    !container.matches("zizai-layout-container")
-  ) {
-    throw new TypeError("A valid layout container is required.");
-  }
-
-  const existingRegion = container.querySelector(":scope > zizai-left-region");
-  if (existingRegion) return existingRegion;
-
-  const region = document.createElement("zizai-left-region");
-  container.append(region);
-  return region;
+  return mountRegion(container, "zizai-left-region", "zizai-left-region");
 }
 
 function mountMiddleRegion(container) {
-  if (
-    !(container instanceof HTMLElement) ||
-    !container.matches("zizai-layout-container")
-  ) {
-    throw new TypeError("A valid layout container is required.");
-  }
-
-  const existingRegion = container.querySelector(
-    ":scope > zizai-middle-region"
-  );
-  if (existingRegion) return existingRegion;
-
-  const region = document.createElement("zizai-middle-region");
-  container.append(region);
-  return region;
+  return mountRegion(container, "zizai-middle-region", "zizai-middle-region");
 }
 
 function mountRightRegion(container) {
-  if (
-    !(container instanceof HTMLElement) ||
-    !container.matches("zizai-layout-container")
-  ) {
-    throw new TypeError("A valid layout container is required.");
-  }
-
-  const existingRegion = container.querySelector(":scope > zizai-right-region");
-  if (existingRegion) return existingRegion;
-
-  const region = document.createElement("zizai-right-region");
-  container.append(region);
-  return region;
+  return mountRegion(container, "zizai-right-region", "zizai-right-region");
 }
 
 const container = mountLayoutContainer(mountPoint);
