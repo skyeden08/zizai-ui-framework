@@ -46,8 +46,61 @@ async function startTests(){
   current=await check("左／中分隔線往左：左變窄、中變寬，右不變",left,-(current[0]+current[1])*0.04,102,current,0,1,2);
   current=await check("中／右分隔線往右：中變寬、右變窄，左不變",middle,(current[1]+current[2])*0.06,103,current,1,2,0);
   current=await check("中／右分隔線往左：中變窄、右變寬，左不變",middle,-(current[1]+current[2])*0.03,104,current,1,2,0);
+  // Repeat collapse/expand after both dividers have written pixel tracks.
+  await collapseOne(0,"左側區","拖曳後");
+  await collapseOne(1,"中間區","拖曳後");
+  await collapseOne(2,"右側區","拖曳後");
+  await collapseTwo(0,1,"左側區＋中間區");
+  await collapseTwo(0,2,"左側區＋右側區");
+  await collapseTwo(1,2,"中間區＋右側區");
   record("整體版面寬度及左右外側邊界固定",close(container.getBoundingClientRect().width,containerWidth)&&close(left.getBoundingClientRect().left,leftEdge)&&close(right.getBoundingClientRect().right,rightEdge));
-  const contents=[left,middle,right].map(r=>r.shadowRoot.querySelector(".region-content"));
+  const regions=[left,middle,right];
+  const contents=regions.map(r=>r.shadowRoot.querySelector(".region-content"));
+  const outerEdgesFixed=()=>close(container.getBoundingClientRect().width,containerWidth)&&
+    close(left.getBoundingClientRect().left,leftEdge)&&close(right.getBoundingClientRect().right,rightEdge);
+  const totalTracksFixed=()=>close(widths().reduce((sum,value)=>sum+value,0),
+    containerWidth-2*(parseFloat(getComputedStyle(container).columnGap)||0));
+  const collapseOne=async(index,label,stage)=>{
+    const before=widths();
+    regions[index].shadowRoot.querySelector('[data-role="collapse-toggle"]').click();
+    await frame();await frame();
+    const after=widths(),others=after.filter((_,i)=>i!==index);
+    const collapsedOk=outerEdgesFixed()&&totalTracksFixed()&&close(others[0],others[1],2);
+    record(`${stage}收合${label}：外側固定、總寬不變、另兩區各半`,collapsedOk,
+      `收合後：${fmt(after)}；另兩區差：${Math.abs(others[0]-others[1]).toFixed(1)}px`);
+    regions[index].shadowRoot.querySelector('[data-role="collapse-toggle"]').click();
+    await frame();await frame();
+    const restored=widths();
+    record(`${stage}展開${label}：恢復收合前寬度`,
+      restored.every((value,i)=>close(value,before[i]))&&outerEdgesFixed(),
+      `收合前：${fmt(before)}；展開後：${fmt(restored)}`);
+  };
+  const collapseTwo=async(first,second,label)=>{
+    const before=widths();
+    regions[first].shadowRoot.querySelector('[data-role="collapse-toggle"]').click();
+    await frame();
+    regions[second].shadowRoot.querySelector('[data-role="collapse-toggle"]').click();
+    await frame();await frame();
+    const after=widths(),remaining=[0,1,2].find(i=>i!==first&&i!==second);
+    const gap=parseFloat(getComputedStyle(container).columnGap)||0;
+    const expectedRemaining=containerWidth-2*gap-after[first]-after[second];
+    record(`同時收合${label}：剩餘區佔滿空間、外側固定`,
+      outerEdgesFixed()&&totalTracksFixed()&&close(after[remaining],expectedRemaining,2),
+      `收合後：${fmt(after)}；剩餘區預期：${expectedRemaining.toFixed(1)}px`);
+    regions[second].shadowRoot.querySelector('[data-role="collapse-toggle"]').click();
+    await frame();
+    regions[first].shadowRoot.querySelector('[data-role="collapse-toggle"]').click();
+    await frame();await frame();
+    const restored=widths();
+    record(`展開${label}：恢復收合前寬度`,
+      restored.every((value,i)=>close(value,before[i]))&&outerEdgesFixed(),
+      `收合前：${fmt(before)}；展開後：${fmt(restored)}`);
+  };
+
+  // Default 2:4:4 state: test each single-region collapse before any drag.
+  await collapseOne(0,"左側區","未拖曳時");
+  await collapseOne(1,"中間區","未拖曳時");
+  await collapseOne(2,"右側區","未拖曳時");
   record("三區獨立垂直捲動設定維持",contents.every(el=>getComputedStyle(el).overflowY==="auto"));
   const topPosition=getComputedStyle(top).position,cs=getComputedStyle(container);
   record("上方區固定與 column-gap 分隔線設定維持",topPosition==="sticky"&&cs.columnGap==="1px",`上方區 position=${topPosition}；column-gap=${cs.columnGap}`);
