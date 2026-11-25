@@ -1,8 +1,8 @@
 import { bindOpenClose } from "../capabilities/open-close.js";
 
 /**
- * 右側區（共視區） owns its collapse state, width state, and operation triggers.
- * It reports only region-level requests through its existing one-way interface.
+ * 右側區（共視區） owns its collapse state and operation triggers.
+ * Its width is adjusted only as the companion track of the middle/right divider.
  */
 export class RightRegion extends HTMLElement {
   #expanded = true;
@@ -90,20 +90,6 @@ export class RightRegion extends HTMLElement {
         margin-block-start: var(--ui-space-small, 0.5rem);
       }
 
-      .resize-handle {
-        position: absolute;
-        inset-block: 0;
-        inset-inline-start: 0;
-        inline-size: 0.5rem;
-        cursor: col-resize;
-        touch-action: none;
-        user-select: none;
-      }
-
-      .resize-handle:focus-visible {
-        outline: 2px solid var(--ui-color-accent, #2563eb);
-        outline-offset: -2px;
-      }
     `;
 
     const frame = document.createElement("section");
