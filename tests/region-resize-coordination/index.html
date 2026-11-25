@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>區域拖曳寬度協調回歸測試</title>
+    <link rel="stylesheet" href="../../styles/variables.css" />
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--ui-color-text, #182230);
+        font-family: var(--ui-font-family, system-ui, sans-serif);
+      }
+      main { padding: 1rem; }
+      #fixture { width: 1000px; height: 600px; max-width: 100%; }
+      #results {
+        min-height: 10rem;
+        padding: 1rem;
+        white-space: pre-wrap;
+        line-height: 1.6;
+        border: 1px solid var(--ui-color-border, #cbd5e1);
+      }
+    </style>
+    <script>
+      (() => {
+        window.__resizeTestCompleted = 0;
+        window.__resizeTestLines = [];
+        window.__resizeTestReportError = (message) => {
+          const write = () => {
+            const results = document.getElementById("results");
+            if (!results) return;
+            results.textContent = [
+              ...(window.__resizeTestLines || []),
+              `ERROR  ${message}`,
+              `已完成：${window.__resizeTestCompleted || 0} 項`
+            ].join("\n");
+            results.dataset.status = "error";
+          };
+          if (document.getElementById("results")) write();
+          else document.addEventListener("DOMContentLoaded", write, { once: true });
+        };
+        window.addEventListener("error", (event) => {
+          window.__resizeTestReportError(
+            event.target instanceof HTMLScriptElement
+              ? `腳本載入或模組解析失敗：${event.target.src || "未知來源"}`
+              : event.message || "發生未捕捉的執行錯誤"
+          );
+        }, true);
+        window.addEventListener("unhandledrejection", (event) => {
+          const reason = event.reason instanceof Error
+            ? `${event.reason.name}: ${event.reason.message}`
+            : String(event.reason);
+          window.__resizeTestReportError(`未處理的 Promise 錯誤：${reason}`);
+        });
+      })();
+    </script>
+  </head>
+  <body>
+    <main>
+      <h1>區域拖曳寬度協調回歸測試</h1>
+      <p>本頁載入容器及三個區域，使用瀏覽器 PointerEvent 驅動各區拖曳控制，檢查相鄰兩區寬度分配。</p>
+      <div id="fixture"></div>
+      <h2>測試結果</h2>
+      <pre id="results" aria-live="polite" data-status="loading">測試頁已載入，等待 DOM 就緒並啟動測試…</pre>
+    </main>
+    <script type="module" src="./test-runner.js"></script>
+  </body>
+</html>
