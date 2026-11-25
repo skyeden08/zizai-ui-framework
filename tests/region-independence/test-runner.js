@@ -43,7 +43,7 @@ const definitions = [
 const regions = definitions.map(({ id, tag }) => {
   const element = document.createElement(tag);
   container.append(element);
-  const api = container.connectRegion(element);
+  const api = id === "top-region" ? null : container.connectRegion(element);
   return { id, element, api };
 });
 
@@ -206,23 +206,30 @@ record(
   noPeerReferences
 );
 
-const noContainerControl = Array.from(sourceByFile.values()).every((source) =>
-  !source.includes("containerInterface") &&
-  !source.includes("zizai:region-request") &&
-  !source.includes("zizai:test-region-operation")
-);
+const topSource = sourceByFile.get("top-region.js");
+const sideSources = ["left-region.js", "middle-region.js", "right-region.js"]
+  .map((filename) => sourceByFile.get(filename));
 
 record(
-  "四區原始碼未直接操作容器介面或集中式協調事件",
-  noContainerControl
+  "上方區不使用容器介面；左、中、右區只透過既有單向介面提出需求",
+  !topSource.includes("containerInterface") &&
+  sideSources.every((source) =>
+    source.includes("this.containerInterface?.requestRegionState") &&
+    source.includes("this.containerInterface?.requestSpace")
+  )
 );
 
+const sideRegions = regions.filter(({ id }) => id !== "top-region");
+const topRegion = regions.find(({ id }) => id === "top-region");
 record(
-  "容器與四區僅透過既有區域至容器介面連接，未建立區域間介面",
-  regions.every(({ api }) =>
+  "容器只為左、中、右區提供既有單向介面，上方區沒有介面或協調狀態",
+  sideRegions.every(({ api }) =>
     Object.keys(api).sort().join(",") === "requestRegionState,requestSpace"
   ) &&
-  new Set(regions.map(({ api }) => api)).size === 4 &&
+  new Set(sideRegions.map(({ api }) => api)).size === 3 &&
+  topRegion.api === null &&
+  !Object.prototype.hasOwnProperty.call(topRegion.element, "containerInterface") &&
+  !container.getCoordinationSnapshot().some((state) => state.regionId === "top-region") &&
   regions.every(({ element }) =>
     !Object.prototype.hasOwnProperty.call(element, "peerRegion") &&
     !Object.prototype.hasOwnProperty.call(element, "regionController")
