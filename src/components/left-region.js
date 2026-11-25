@@ -46,6 +46,7 @@ export class LeftRegion extends HTMLElement {
         padding: var(--ui-space-small, 0.5rem);
         color: var(--ui-color-muted, #526174);
         background: var(--ui-color-surface, #ffffff);
+        box-shadow: inset -1px 0 0 var(--ui-color-border, #cbd5e1);
         font-family: var(--ui-font-family, system-ui, sans-serif);
       }
 
