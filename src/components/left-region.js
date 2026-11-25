@@ -174,7 +174,7 @@ export class LeftRegion extends HTMLElement {
       bindDragAdjustment({
         handle: resizeHandle,
         onDragStart: () => {
-          this.#dragStartWidth = this.getBoundingClientRect().width;
+          this.#dragStartWidth = this.#width ?? this.getBoundingClientRect().width;
         },
         onDrag: ({ deltaX }) => {
           const direction = 1;
