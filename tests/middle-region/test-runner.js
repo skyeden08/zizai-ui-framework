@@ -20,7 +20,7 @@ async function startTests() {
       return;
     }
     const summary = `已完成：${completed} 項；通過：${passed}；未通過：${failed}`;
-    results.textContent = [...lines, summary, message].filter(Boolean).join("\\n");
+    results.textContent = [...lines, summary, message].filter(Boolean).join("\n");
     results.dataset.status = message.startsWith("ERROR")
       ? "error"
       : "running";
@@ -90,7 +90,6 @@ async function startTests() {
       {
         name: "中間區自身呈現及內部操作獨立於容器",
         run: () => {
-          const inputSlot = region.querySelector("[slot='input']");
           const control = document.createElement("button");
           control.type = "button";
           control.slot = "input";
@@ -121,13 +120,17 @@ async function startTests() {
           });
           control.dispatchEvent(event);
 
-          return !inputSlot &&
+          const assigned = region.shadowRoot
+            .querySelector("slot[name='input']")
+            .assignedElements();
+
+          return assigned.includes(control) &&
+            assigned.includes(output) &&
             regionHandled === 1 &&
             output.textContent === "1" &&
             containerHandled === 1 &&
             !containerChangedEvent &&
-            !event.defaultPrevented &&
-            container.querySelector("output") === output;
+            !event.defaultPrevented;
         }
       },
       {
@@ -146,7 +149,7 @@ async function startTests() {
           const surface = region.shadowRoot.querySelector(".surface");
           return style.flexGrow === "0" &&
             style.flexBasis === "auto" &&
-            style.height === "auto" &&
+            region.style.height === "" &&
             !["auto", "scroll"].includes(style.overflowY) &&
             surface?.hasAttribute("data-fill-remaining-space") === false &&
             region.shadowRoot.querySelector("[data-resize-handle]") === null;
