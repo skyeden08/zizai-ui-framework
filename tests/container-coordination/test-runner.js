@@ -54,7 +54,8 @@ record(
   containerStyle.includes('"top top top"') &&
   containerStyle.includes('"left middle right"') &&
   containerStyle.includes("grid-template-columns: auto auto auto") &&
-  containerStyle.includes("grid-template-rows: auto auto")
+  containerStyle.includes("grid-template-rows: auto auto") &&
+  containerStyle.includes("display: contents")
 );
 
 record(
