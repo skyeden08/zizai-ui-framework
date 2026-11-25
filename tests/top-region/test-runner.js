@@ -1,3 +1,9 @@
+import { LayoutContainer } from "../../src/components/layout-container.js";
+import { TopRegion } from "../../src/components/top-region.js";
+import { LeftRegion } from "../../src/components/left-region.js";
+import { MiddleRegion } from "../../src/components/middle-region.js";
+import { RightRegion } from "../../src/components/right-region.js";
+
 let started = false;
 
 async function startTests() {
@@ -19,7 +25,7 @@ async function startTests() {
       window.__topRegionReportError?.("找不到結果容器 #results");
       return;
     }
-    const summary = `已完成：${completed} 項；通過：${passed}；未通過：${failed}`;
+    const summary = "已完成：" + completed + " 項；通過：" + passed + "；未通過：" + failed;
     results.textContent = [...lines, summary, message].filter(Boolean).join("\n");
     results.dataset.status = message.startsWith("ERROR")
       ? "error"
@@ -31,13 +37,15 @@ async function startTests() {
     completed += 1;
     if (passedCondition) {
       passed += 1;
-      lines.push(`PASS  ${name}`);
+      lines.push("PASS  " + name);
     } else {
       failed += 1;
-      lines.push(`FAIL  ${name}${detail ? ` — ${detail}` : ""}`);
+      lines.push("FAIL  " + name + (detail ? " — " + detail : ""));
     }
     render();
   };
+
+  const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
   try {
     if (!results) throw new Error("找不到結果容器 #results");
@@ -45,10 +53,13 @@ async function startTests() {
 
     render("測試程式已啟動；正在載入必要元件…");
 
-    const [{ LayoutContainer }, { TopRegion }] = await Promise.all([
-      import("../../src/components/layout-container.js"),
-      import("../../src/components/top-region.js")
-    ]);
+    const container = document.createElement("zizai-layout-container");
+    const top = document.createElement("zizai-top-region");
+    const sideDefinitions = [
+      { id: "left-region", tag: "zizai-left-region" },
+      { id: "middle-region", tag: "zizai-middle-region" },
+      { id: "right-region", tag: "zizai-right-region" }
+    ];
 
     if (!customElements.get("zizai-layout-container")) {
       customElements.define("zizai-layout-container", LayoutContainer);
@@ -56,90 +67,170 @@ async function startTests() {
     if (!customElements.get("zizai-top-region")) {
       customElements.define("zizai-top-region", TopRegion);
     }
-
-    const container = document.createElement("zizai-layout-container");
-    const region = document.createElement("zizai-top-region");
-    container.append(region);
-    fixture.append(container);
-
-    const checks = [
-      {
-        name: "上方區自身呈現",
-        run: () =>
-          region.shadowRoot instanceof ShadowRoot &&
-          region.shadowRoot.querySelector("section[role='banner']") !== null &&
-          region.shadowRoot.querySelector(".placeholder")?.textContent === "上方區內容尚未建立"
-      },
-      {
-        name: "上方區內部操作獨立於容器",
-        run: () => {
-          const control = document.createElement("button");
-          control.type = "button";
-          control.textContent = "上方區內部操作測試";
-          region.append(control);
-
-          let regionHandled = 0;
-          let containerObserved = 0;
-          let containerChangedEvent = false;
-          region.addEventListener("click", () => { regionHandled += 1; });
-          container.addEventListener("click", (event) => {
-            containerObserved += 1;
-            containerChangedEvent =
-              event.defaultPrevented || event.cancelBubble || event.target !== control;
-          });
-
-          const event = new MouseEvent("click", { bubbles: true, cancelable: true });
-          control.dispatchEvent(event);
-          return regionHandled === 1 &&
-            containerObserved === 1 &&
-            !containerChangedEvent &&
-            !event.defaultPrevented &&
-            !event.cancelBubble;
-        }
-      },
-      {
-        name: "上方區固定且不提供收合",
-        run: () => {
-          const style = getComputedStyle(region);
-          return style.position === "sticky" &&
-            style.top === "0px" &&
-            region.getAttribute("aria-expanded") === null &&
-            region.shadowRoot.querySelector("button, summary, [aria-expanded]") === null;
-        }
-      },
-      {
-        name: "容器不接管上方區內容與狀態",
-        run: () => {
-          const control = region.querySelector("button");
-          return control?.textContent === "上方區內部操作測試" &&
-            control.disabled === false &&
-            region.getAttribute("aria-expanded") === null &&
-            container.getAttribute("aria-expanded") === null &&
-            container.shadowRoot.querySelector("slot") !== null;
-        }
-      }
-    ];
-
-    for (const check of checks) {
-      try {
-        record(check.name, Boolean(check.run()));
-      } catch (error) {
-        record(
-          check.name,
-          false,
-          error instanceof Error ? `${error.name}: ${error.message}` : String(error)
-        );
-      }
+    if (!customElements.get("zizai-left-region")) {
+      customElements.define("zizai-left-region", LeftRegion);
+    }
+    if (!customElements.get("zizai-middle-region")) {
+      customElements.define("zizai-middle-region", MiddleRegion);
+    }
+    if (!customElements.get("zizai-right-region")) {
+      customElements.define("zizai-right-region", RightRegion);
     }
 
-    render(`測試結束：${failed === 0 ? "全部通過" : "有項目未通過"}`);
+    container.append(top);
+    const regions = sideDefinitions.map(({ id, tag }) => {
+      const element = document.createElement(tag);
+      container.append(element);
+      const api = container.connectRegion(element);
+      const filler = document.createElement("div");
+      filler.style.minHeight = "900px";
+      filler.textContent = id + " 捲動測試內容";
+      if (id === "middle-region") filler.slot = "conversation";
+      element.append(filler);
+      return { id, element, api };
+    });
+    fixture.replaceChildren(container);
+
+    await nextFrame();
+    await nextFrame();
+
+    record(
+      "上方區自身呈現",
+      top.shadowRoot instanceof ShadowRoot &&
+      top.shadowRoot.querySelector("section[role='banner']") !== null &&
+      top.shadowRoot.querySelector(".placeholder")?.textContent === "上方區內容尚未建立"
+    );
+
+    const topStyle = getComputedStyle(top);
+    record(
+      "上方區固定於容器上方",
+      topStyle.position === "sticky" &&
+      topStyle.top === "0px" &&
+      Math.abs(top.getBoundingClientRect().top - container.getBoundingClientRect().top) < 1
+    );
+
+    const topRectBeforeScroll = top.getBoundingClientRect();
+    let allScrollChecksPassed = true;
+    for (const region of regions) {
+      const viewport = region.element.shadowRoot.querySelector(".region-content");
+      const maxScroll = viewport ? viewport.scrollHeight - viewport.clientHeight : 0;
+      if (!viewport || maxScroll <= 0) {
+        allScrollChecksPassed = false;
+        record(
+          region.id + " 具有可實際操作的獨立垂直捲動區",
+          false,
+          "可捲動範圍為 " + maxScroll
+        );
+        continue;
+      }
+
+      viewport.scrollTop = maxScroll;
+      await nextFrame();
+      const topRectAfterScroll = top.getBoundingClientRect();
+      const passedCheck =
+        viewport.scrollTop > 0 &&
+        Math.abs(topRectAfterScroll.top - topRectBeforeScroll.top) < 1 &&
+        Math.abs(topRectAfterScroll.height - topRectBeforeScroll.height) < 1;
+      allScrollChecksPassed = allScrollChecksPassed && passedCheck;
+      record(
+        "上方區不隨" + region.id + "垂直捲動移動",
+        passedCheck,
+        "上方區 top：" + topRectBeforeScroll.top + " → " + topRectAfterScroll.top
+      );
+      viewport.scrollTop = 0;
+    }
+
+    record(
+      "上方區不隨左、中、右區垂直捲動而移動",
+      allScrollChecksPassed
+    );
+
+    record(
+      "上方區沒有收合控制或收合狀態",
+      top.shadowRoot.querySelector("button, summary, [aria-expanded], [data-role='collapse-toggle']") === null &&
+      top.getAttribute("aria-expanded") === null &&
+      top.shadowRoot.querySelector("[data-role='resize-handle']") === null
+    );
+
+    const snapshot = container.getCoordinationSnapshot();
+    record(
+      "容器未提供上方區收合介面或狀態",
+      !Object.prototype.hasOwnProperty.call(top, "containerInterface") &&
+      !snapshot.some((state) => state.regionId === "top-region") &&
+      (() => {
+        try {
+          container.connectRegion(top);
+          return false;
+        } catch (error) {
+          return error instanceof TypeError;
+        }
+      })()
+    );
+
+    record(
+      "左、中、右區仍各自保有收合控制、寬度調整入口及既有單向介面",
+      regions.every(({ element, api }) =>
+        element.shadowRoot.querySelector('[data-role="collapse-toggle"]') instanceof HTMLButtonElement &&
+        element.shadowRoot.querySelector('[data-role="resize-handle"]') instanceof HTMLElement &&
+        typeof api.requestRegionState === "function" &&
+        typeof api.requestSpace === "function"
+      )
+    );
+
+    const requests = [];
+    container.addEventListener("zizai:region-request", (event) => requests.push(event.detail));
+    for (const region of regions) {
+      const toggle = region.element.shadowRoot.querySelector('[data-role="collapse-toggle"]');
+      toggle.click();
+      const collapse = requests.at(-1);
+      const collapsedLocally =
+        toggle.getAttribute("aria-expanded") === "false" &&
+        region.element.shadowRoot.querySelector(".region-content").hidden === true &&
+        collapse?.regionId === region.id &&
+        collapse?.kind === "region-state" &&
+        collapse?.request?.collapsed === true;
+      record(region.id + " 沿用既有收合機制", collapsedLocally);
+
+      toggle.click();
+      const expand = requests.at(-1);
+      record(
+        region.id + " 沿用既有展開機制",
+        toggle.getAttribute("aria-expanded") === "true" &&
+        region.element.shadowRoot.querySelector(".region-content").hidden === false &&
+        expand?.regionId === region.id &&
+        expand?.kind === "region-state" &&
+        expand?.request?.collapsed === false
+      );
+    }
+
+    record(
+      "收合與展開請求只來自左、中、右區",
+      requests.length === 6 &&
+      requests.every((request) =>
+        ["left-region", "middle-region", "right-region"].includes(request.regionId)
+      )
+    );
+
+    const containerSource = await fetch("../../src/components/layout-container.js").then((response) => {
+      if (!response.ok) throw new Error("無法讀取容器來源：" + response.status);
+      return response.text();
+    });
+    record(
+      "容器來源不含上方區角色、收合狀態或上方區介面映射",
+      !containerSource.includes('"zizai-top-region"') &&
+      !containerSource.includes('"top-region"') &&
+      !containerSource.includes("topRegion") &&
+      !containerSource.includes("top-region")
+    );
+
+    render("測試結束：" + (failed === 0 ? "全部通過" : "有項目未通過"));
     results.dataset.status = failed === 0 ? "passed" : "failed";
   } catch (error) {
     const message = error instanceof Error
-      ? `${error.name}: ${error.message}`
+      ? error.name + ": " + error.message
       : String(error);
-    lines.push(`ERROR  ${message}`);
-    render(`已中止；已完成 ${completed} 項`);
+    lines.push("ERROR  " + message);
+    render("已中止；已完成 " + completed + " 項");
     results.dataset.status = "error";
   }
 }
@@ -156,6 +247,6 @@ try {
   launchWhenDomReady();
 } catch (error) {
   window.__topRegionReportError?.(
-    error instanceof Error ? `${error.name}: ${error.message}` : String(error)
+    error instanceof Error ? error.message : String(error)
   );
 }
