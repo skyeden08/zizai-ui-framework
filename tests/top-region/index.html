@@ -8,12 +8,12 @@
     <style>
       body {
         margin: 0;
-        min-height: 200vh;
+        min-height: 100vh;
         color: var(--ui-color-text, #182230);
         font-family: var(--ui-font-family, system-ui, sans-serif);
       }
-      main { padding: 1rem; }
-      #fixture { min-height: 8rem; }
+      main { padding: 0; }
+      #fixture { min-height: 100vh; }
       #results {
         min-height: 8rem;
         padding: 1rem;
@@ -21,7 +21,7 @@
         line-height: 1.6;
         border: 1px solid var(--ui-color-border, #cbd5e1);
       }
-      #scroll-note { margin-top: 70vh; }
+      #scroll-note { margin-top: 1rem; }
     </style>
     <script>
       (() => {
@@ -67,12 +67,12 @@
   </head>
   <body>
     <main>
-      <h1>上方區獨立測試</h1>
-      <p>本頁只載入版面容器與上方區，不啟動平台入口，也不載入其他區域。</p>
       <div id="fixture"></div>
+      <h1>上方區固定與收合邊界測試</h1>
+      <p>本頁載入容器及四個區域，以瀏覽器實際捲動左、中、右區，檢查上方區位置與容器介面邊界。</p>
       <h2>測試結果</h2>
       <pre id="results" aria-live="polite" data-status="loading">測試頁已載入，等待 DOM 就緒並啟動測試…</pre>
-      <p id="scroll-note">捲動頁面可觀察上方區的 sticky 固定效果。</p>
+      <p id="scroll-note">本頁測試的是左、中、右區內部捲動時，上方區是否保持原位。</p>
     </main>
     <script type="module" src="./test-runner.js"></script>
   </body>
