@@ -46,6 +46,21 @@ async function startTests() {
   };
 
   const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+  const pointer = (type, pointerId, clientX) => new PointerEvent(type, {
+    bubbles: true,
+    cancelable: true,
+    pointerId,
+    pointerType: "mouse",
+    isPrimary: true,
+    button: 0,
+    clientX
+  });
+  const drag = (handle, pointerId, startX, endX) => {
+    handle.setPointerCapture = () => {};
+    handle.dispatchEvent(pointer("pointerdown", pointerId, startX));
+    handle.dispatchEvent(pointer("pointermove", pointerId, endX));
+    handle.dispatchEvent(pointer("pointerup", pointerId, endX));
+  };
 
   try {
     if (!results) throw new Error("找不到結果容器 #results");
@@ -206,6 +221,28 @@ async function startTests() {
     record(
       "收合與展開請求只來自左、中、右區",
       requests.length === 6 &&
+      requests.every((request) =>
+        ["left-region", "middle-region", "right-region"].includes(request.regionId)
+      )
+    );
+
+    for (const [index, region] of regions.entries()) {
+      const handle = region.element.shadowRoot.querySelector('[data-role="resize-handle"]');
+      const requestStart = requests.length;
+      drag(handle, 200 + index, 200, 224);
+      const widthRequest = requests[requestStart];
+      record(
+        region.id + " 沿用既有拖曳寬度調整機制",
+        widthRequest?.regionId === region.id &&
+        widthRequest?.kind === "space" &&
+        Number.isFinite(widthRequest?.request?.width) &&
+        widthRequest.request.width > 0
+      );
+    }
+
+    record(
+      "寬度調整請求仍只來自左、中、右區",
+      requests.length === 9 &&
       requests.every((request) =>
         ["left-region", "middle-region", "right-region"].includes(request.regionId)
       )
