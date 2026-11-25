@@ -29,6 +29,10 @@ function fillRegion(region, slotName = "") {
   }
 }
 
+function maxScroll(viewport) {
+  return Math.max(0, viewport.scrollHeight - viewport.clientHeight);
+}
+
 try {
   defineElement("zizai-layout-container", LayoutContainer);
   defineElement("zizai-top-region", TopRegion);
@@ -60,6 +64,9 @@ try {
   container.append(top, left, middle, right);
   for (const region of [top, left, middle, right]) container.connectRegion(region);
 
+  // Wait for slot distribution and two rendering frames before measuring scroll geometry.
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
   const regions = [
     { id: "left-region", element: left },
     { id: "middle-region", element: middle },
@@ -76,59 +83,89 @@ try {
     scrollers.every(({ viewport }) =>
       viewport instanceof HTMLElement &&
       getComputedStyle(viewport).overflowY === "auto" &&
-      viewport.scrollHeight > viewport.clientHeight
+      maxScroll(viewport) > 0
     )
   );
 
   for (const target of scrollers) {
     for (const item of scrollers) item.viewport.scrollTop = 0;
-    target.viewport.scrollTop = 48;
-    const targetMoved = target.viewport.scrollTop > 0;
+    const targetMax = maxScroll(target.viewport);
+    target.viewport.scrollTop = targetMax * 0.3;
+    const targetPosition = target.viewport.scrollTop;
+    const targetMoved = targetMax > 0 && targetPosition > 0;
     const othersStayed = scrollers
       .filter((item) => item !== target)
       .every((item) => item.viewport.scrollTop === 0);
     record(
       `${target.id} 捲動只改變自身位置`,
       targetMoved && othersStayed,
-      `自身 scrollTop=${target.viewport.scrollTop}；其他區維持 0`
+      `自身 scrollTop=${targetPosition.toFixed(2)}；其他區維持 0；可捲動範圍=${targetMax.toFixed(2)}`
     );
   }
 
   const leftViewport = left.shadowRoot.querySelector(".region-content");
   const middleViewport = middle.shadowRoot.querySelector(".region-content");
   const rightViewport = right.shadowRoot.querySelector(".region-content");
-  leftViewport.scrollTop = 31;
-  middleViewport.scrollTop = 57;
-  rightViewport.scrollTop = 83;
+  const simultaneousTargets = [
+    { viewport: leftViewport, ratio: 0.2 },
+    { viewport: middleViewport, ratio: 0.45 },
+    { viewport: rightViewport, ratio: 0.7 }
+  ];
+  const simultaneousRanges = simultaneousTargets.map(({ viewport }) => maxScroll(viewport));
+  simultaneousTargets.forEach(({ viewport, ratio }) => {
+    viewport.scrollTop = maxScroll(viewport) * ratio;
+  });
+  const simultaneousPositions = simultaneousTargets.map(({ viewport }) => viewport.scrollTop);
+  const positionsAreDistinct = new Set(simultaneousPositions.map((value) => Math.round(value * 100) / 100)).size === 3;
+
   record(
     "三區可同時保有彼此獨立的捲動位置",
-    leftViewport.scrollTop === 31 &&
-      middleViewport.scrollTop === 57 &&
-      rightViewport.scrollTop === 83
+    simultaneousRanges.every((range) => range > 0) &&
+      simultaneousPositions.every((position) => position > 0) &&
+      positionsAreDistinct,
+    `實際位置：左=${simultaneousPositions[0].toFixed(2)}、中=${simultaneousPositions[1].toFixed(2)}、右=${simultaneousPositions[2].toFixed(2)}；各區依自身可捲動範圍設定比例`
   );
 
-  const middleRootChildren = Array.from(middle.shadowRoot.childNodes);
-  const middleContentChildren = Array.from(middleViewport.childNodes);
+  const containerRect = container.getBoundingClientRect();
+  const initialRects = [left, middle, right].map((region) => region.getBoundingClientRect());
+  const initialRatios = initialRects.map((rect) => rect.width / containerRect.width);
+  record(
+    "初始版面依 2:4:4 比例分配三區寬度",
+    Math.abs(initialRatios[0] - 0.2) <= 0.02 &&
+      Math.abs(initialRatios[1] - 0.4) <= 0.02 &&
+      Math.abs(initialRatios[2] - 0.4) <= 0.02,
+    `實際比例：${initialRatios.map((ratio) => (ratio * 10).toFixed(2)).join(":")}`
+  );
+
   const leftRequest = left.containerInterface.requestSpace({ width: 180 });
   const rightRequest = right.containerInterface.requestSpace({ width: 220 });
-  const containerRect = container.getBoundingClientRect();
   const leftRect = left.getBoundingClientRect();
   const middleRect = middle.getBoundingClientRect();
   const rightRect = right.getBoundingClientRect();
-  const expectedMiddleWidth = containerRect.width - leftRect.width - rightRect.width;
+  const resizedContainerRect = container.getBoundingClientRect();
+  const expectedMiddleWidth = resizedContainerRect.width - leftRect.width - rightRect.width;
   const geometryTolerance = 2;
 
   record(
-    "中間區以 1fr 取得左、右區配置後的全部剩餘寬度",
+    "沿用左右區既有寬度請求後，中間區取得其餘可用寬度",
     leftRequest.accepted === true &&
       rightRequest.accepted === true &&
       Math.abs(leftRect.width - 180) <= geometryTolerance &&
       Math.abs(rightRect.width - 220) <= geometryTolerance &&
       middleRect.width > 0 &&
       Math.abs(middleRect.width - expectedMiddleWidth) <= geometryTolerance,
-    `容器=${containerRect.width.toFixed(1)}px；左=${leftRect.width.toFixed(1)}px；中=${middleRect.width.toFixed(1)}px；右=${rightRect.width.toFixed(1)}px；中間預期剩餘=${expectedMiddleWidth.toFixed(1)}px`
+    `容器=${resizedContainerRect.width.toFixed(1)}px；左=${leftRect.width.toFixed(1)}px；中=${middleRect.width.toFixed(1)}px；右=${rightRect.width.toFixed(1)}px`
   );
 
+  const middleRequest = middle.containerInterface.requestSpace({ width: 260 });
+  record(
+    "中間區也沿用第 9 項既有寬度請求調整 Grid 軌道",
+    middleRequest.accepted === true &&
+      Math.abs(middle.getBoundingClientRect().width - 260) <= geometryTolerance
+  );
+
+  const middleRootChildren = Array.from(middle.shadowRoot.childNodes);
+  const middleContentChildren = Array.from(middleViewport.childNodes);
   record(
     "容器調整 Grid 軌道前後未改動中間區內部節點",
     middleRootChildren.length === middle.shadowRoot.childNodes.length &&
@@ -184,9 +221,11 @@ try {
 
   const containerSource = source.get("layout-container.js");
   record(
-    "容器只調整自身 Grid 軌道，未新增 JS 剩餘空間量測公式",
-    containerSource.includes('grid-template-columns: auto minmax(0, 1fr) auto;') &&
-      containerSource.includes('return "minmax(0, 1fr)";') &&
+    "容器初始使用 2fr 4fr 4fr，請求後仍由 Grid 軌道分配",
+    containerSource.includes("grid-template-columns: 2fr 4fr 4fr;") &&
+      containerSource.includes('"left-region", "2fr"') &&
+      containerSource.includes('"middle-region", "4fr"') &&
+      containerSource.includes('"right-region", "4fr"') &&
       !containerSource.includes("ResizeObserver") &&
       !containerSource.includes("clientWidth") &&
       !containerSource.includes("scrollWidth")
