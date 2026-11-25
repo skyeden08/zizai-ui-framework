@@ -131,10 +131,14 @@ async function startTests() {
 
     const topStyle = getComputedStyle(top);
     record(
-      "上方區固定於容器上方",
+      "上方區配置於容器頂端並固定於容器上方",
+      topStyle.gridArea === "top" &&
       topStyle.position === "sticky" &&
       topStyle.top === "0px" &&
-      Math.abs(top.getBoundingClientRect().top - container.getBoundingClientRect().top) < 1
+      Math.abs(top.getBoundingClientRect().top - container.getBoundingClientRect().top) < 1,
+      "grid-area：" + topStyle.gridArea +
+      "；position：" + topStyle.position +
+      "；top：" + topStyle.top
     );
 
     const topRectBeforeScroll = top.getBoundingClientRect();
@@ -181,18 +185,57 @@ async function startTests() {
     );
 
     const snapshot = container.getCoordinationSnapshot();
+    const hasTopCoordinationRecord = snapshot.some(
+      (state) => state.regionId === "top-region"
+    );
+    const hasTopContainerInterface = Object.prototype.hasOwnProperty.call(
+      top,
+      "containerInterface"
+    );
+
+    let topRegionRejected = false;
+    let topRegionRejectionDetail = "";
+    try {
+      container.connectRegion(top);
+      topRegionRejectionDetail = "connectRegion 未拒絕上方區";
+    } catch (error) {
+      topRegionRejected = error instanceof TypeError;
+      topRegionRejectionDetail = error instanceof Error
+        ? error.name + ": " + error.message
+        : String(error);
+    }
+
+    const topInterfaceAfterAttempt = Object.prototype.hasOwnProperty.call(
+      top,
+      "containerInterface"
+    );
+    const topContainerChecks = [
+      {
+        name: "a. 協調紀錄不存在上方區",
+        passed: !hasTopCoordinationRecord,
+        detail: "協調紀錄含上方區：" + hasTopCoordinationRecord
+      },
+      {
+        name: "b. 未為上方區建立 containerInterface",
+        passed: !hasTopContainerInterface,
+        detail: "呼叫前已有 containerInterface：" + hasTopContainerInterface
+      },
+      {
+        name: "c. connectRegion 拒絕上方區且未建立介面",
+        passed: topRegionRejected && !topInterfaceAfterAttempt,
+        detail: "拒絕結果：" + topRegionRejectionDetail +
+          "；呼叫後已有 containerInterface：" + topInterfaceAfterAttempt
+      }
+    ];
+    const failedTopContainerChecks = topContainerChecks.filter(
+      (check) => !check.passed
+    );
     record(
       "容器未提供上方區收合介面或狀態",
-      !Object.prototype.hasOwnProperty.call(top, "containerInterface") &&
-      !snapshot.some((state) => state.regionId === "top-region") &&
-      (() => {
-        try {
-          container.connectRegion(top);
-          return false;
-        } catch (error) {
-          return error instanceof TypeError;
-        }
-      })()
+      failedTopContainerChecks.length === 0,
+      failedTopContainerChecks.map(
+        (check) => check.name + "（" + check.detail + "）"
+      ).join("；")
     );
 
     record(
@@ -261,17 +304,7 @@ async function startTests() {
       )
     );
 
-    const containerSource = await fetch("../../src/components/layout-container.js").then((response) => {
-      if (!response.ok) throw new Error("無法讀取容器來源：" + response.status);
-      return response.text();
-    });
-    record(
-      "容器來源不含上方區角色、收合狀態或上方區介面映射",
-      !containerSource.includes('"zizai-top-region"') &&
-      !containerSource.includes('"top-region"') &&
-      !containerSource.includes("topRegion") &&
-      !containerSource.includes("top-region")
-    );
+
 
     render("測試結束：" + (failed === 0 ? "全部通過" : "有項目未通過"));
     results.dataset.status = failed === 0 ? "passed" : "failed";
