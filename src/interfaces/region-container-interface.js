@@ -12,11 +12,12 @@ export function createRegionContainerInterface(regionId, submitRequest) {
   }
 
   function send(kind, payload) {
-    if (
-      payload === null ||
-      typeof payload !== "object" ||
-      Array.isArray(payload)
-    ) {
+    const prototype =
+      payload !== null && typeof payload === "object"
+        ? Object.getPrototypeOf(payload)
+        : undefined;
+
+    if (prototype !== Object.prototype && prototype !== null) {
       throw new TypeError("A request payload must be a plain object.");
     }
 
