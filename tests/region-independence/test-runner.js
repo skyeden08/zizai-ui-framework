@@ -59,14 +59,26 @@ record(
   container.shadowRoot.querySelector("slot") !== null
 );
 
-const siblingEvents = new Map(regions.map(({ id }) => [id, 0]));
-for (const region of regions) {
-  for (const sibling of regions) {
-    if (sibling === region) continue;
-    sibling.element.addEventListener("zizai:test-region-operation", () => {
-      siblingEvents.set(sibling.id, siblingEvents.get(sibling.id) + 1);
+const crossRegionEvents = [];
+const regionEventCounts = new Map(regions.map(({ id }) => [id, 0]));
+
+for (const receiver of regions) {
+  receiver.element.addEventListener("zizai:test-region-operation", (event) => {
+    const eventPath = event.composedPath();
+    const source = regions.find(({ element }) => eventPath.includes(element));
+    const sourceId = source?.id ?? event.detail?.owner ?? "unknown-source";
+
+    if (sourceId === receiver.id) {
+      regionEventCounts.set(receiver.id, regionEventCounts.get(receiver.id) + 1);
+      return;
+    }
+
+    crossRegionEvents.push({
+      source: sourceId,
+      receiver: receiver.id,
+      eventType: event.type
     });
-  }
+  });
 }
 
 let containerObservedOperations = 0;
@@ -127,9 +139,16 @@ for (const result of operationResults) {
   );
 }
 
+const crossRegionDetail = crossRegionEvents.length
+  ? crossRegionEvents.map(({ source, receiver, eventType }) =>
+      "來源：" + source + "；接收者：" + receiver + "；事件：" + eventType
+    ).join(" | ")
+  : "未發現來源區域與接收區域不同的事件";
+
 record(
   "四區內部操作不觸發其他區域的操作處理",
-  Array.from(siblingEvents.values()).every((count) => count === 0)
+  crossRegionEvents.length === 0,
+  crossRegionDetail
 );
 
 record(
@@ -146,8 +165,14 @@ record(
 
 record(
   "區域內部操作事件未形成區域間傳播或控制",
-  Array.from(siblingEvents.values()).every((count) => count === 0) &&
-  containerObservedOperations === regions.length
+  crossRegionEvents.length === 0,
+  crossRegionDetail
+);
+
+record(
+  "區域內部事件可正常冒泡至容器（不作為區域間耦合判定）",
+  containerObservedOperations === regions.length,
+  "容器接收 " + containerObservedOperations + "/" + regions.length + " 次事件"
 );
 
 const regionSourcePaths = [
