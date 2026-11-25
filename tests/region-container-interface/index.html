@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>容器與各區域必要介面測試</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 1.5rem;
+        color: #182230;
+        font-family: system-ui, sans-serif;
+      }
+
+      #fixture {
+        display: grid;
+        gap: 0.5rem;
+        border: 1px dashed #64748b;
+        padding: 1rem;
+      }
+
+      #results {
+        white-space: pre-wrap;
+        line-height: 1.6;
+      }
+    </style>
+    <script type="module" src="./test-runner.js"></script>
+  </head>
+  <body>
+    <h1>容器與各區域必要介面測試</h1>
+    <p>本頁只驗證容器與各區域之間的請求介面，不實作版面配置行為，也不建立區域間連接。</p>
+    <div id="fixture"></div>
+    <h2>測試結果</h2>
+    <pre id="results" aria-live="polite">測試頁已載入，等待 DOM 就緒並啟動測試…</pre>
+  </body>
+</html>
