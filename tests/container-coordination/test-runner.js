@@ -40,14 +40,32 @@ const regionDefinitions = [
   { id: "right-region", tag: "zizai-right-region" }
 ];
 
-const regions = regionDefinitions.map(({ id, tag }) => {
-  const element = document.createElement(tag);
-  container.append(element);
-  const api = container.connectRegion(element);
-  return { id, element, api };
-});
+const top = document.createElement("zizai-top-region");
+container.append(top);
+
+const regions = regionDefinitions
+  .filter(({ id }) => id !== "top-region")
+  .map(({ id, tag }) => {
+    const element = document.createElement(tag);
+    container.append(element);
+    const api = container.connectRegion(element);
+    return { id, element, api };
+  });
 
 const containerStyle = container.shadowRoot.querySelector("style").textContent;
+
+record(
+  "上方區不進入容器區域狀態協調",
+  !Object.prototype.hasOwnProperty.call(top, "containerInterface") &&
+  (() => {
+    try {
+      container.connectRegion(top);
+      return false;
+    } catch (error) {
+      return error instanceof TypeError;
+    }
+  })()
+);
 
 record(
   "容器以單一版面配置安排上方區及左、中、右區",
@@ -67,9 +85,10 @@ record(
 
 const initialSnapshot = container.getCoordinationSnapshot();
 record(
-  "容器建立四個獨立的區域層級協調紀錄",
+  "容器只為左、中、右區建立區域層級協調紀錄",
   Object.isFrozen(initialSnapshot) &&
-  initialSnapshot.length === 4 &&
+  initialSnapshot.length === 3 &&
+  !initialSnapshot.some((state) => state.regionId === "top-region") &&
   initialSnapshot.every((state) =>
     state.spaceRequest === null &&
     state.regionStateRequest === null &&
@@ -101,7 +120,7 @@ record(
 
 record(
   "單一區域的新請求不覆蓋其他區域的協調狀態",
-  coordinated.length === 4 &&
+  coordinated.length === 3 &&
   coordinated.every((state) =>
     state.spaceRequest?.marker === `${state.regionId}-space` &&
     state.regionStateRequest?.marker === `${state.regionId}-state` &&
