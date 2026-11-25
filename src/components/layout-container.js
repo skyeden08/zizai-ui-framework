@@ -39,6 +39,8 @@ export class LayoutContainer extends HTMLElement {
         height: 100vh;
         min-width: 0;
         min-height: 0;
+        background: var(--ui-color-border, #cbd5e1);
+        column-gap: 1px;
         grid-template-areas:
           "top top top"
           "left middle right";
