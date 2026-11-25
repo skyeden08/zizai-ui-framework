@@ -64,9 +64,6 @@ try {
   container.append(top, left, middle, right);
   for (const region of [top, left, middle, right]) container.connectRegion(region);
 
-  // Wait for slot distribution and two rendering frames before measuring scroll geometry.
-  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-
   const regions = [
     { id: "left-region", element: left },
     { id: "middle-region", element: middle },
