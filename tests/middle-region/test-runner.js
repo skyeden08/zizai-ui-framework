@@ -101,16 +101,15 @@ async function startTests() {
 
           let regionHandled = 0;
           let containerHandled = 0;
-          let containerChangedEvent = false;
+          let outputValueWhenContainerHandled = null;
 
           control.addEventListener("click", () => {
             regionHandled += 1;
             output.textContent = String(regionHandled);
           });
-          container.addEventListener("click", (event) => {
+          container.addEventListener("click", () => {
             containerHandled += 1;
-            containerChangedEvent =
-              event.defaultPrevented || event.target !== region;
+            outputValueWhenContainerHandled = output.textContent;
           });
 
           const event = new MouseEvent("click", {
@@ -124,13 +123,33 @@ async function startTests() {
             .querySelector("slot[name='input']")
             .assignedElements();
 
-          return assigned.includes(control) &&
-            assigned.includes(output) &&
-            regionHandled === 1 &&
-            output.textContent === "1" &&
-            containerHandled === 1 &&
-            !containerChangedEvent &&
-            !event.defaultPrevented;
+          const failedConditions = [];
+          if (!assigned.includes(control)) {
+            failedConditions.push("內部按鈕未掛載於中間區 input 插槽");
+          }
+          if (!assigned.includes(output)) {
+            failedConditions.push("操作狀態 output 未掛載於中間區 input 插槽");
+          }
+          if (regionHandled !== 1) {
+            failedConditions.push(`中間區內部按鈕事件執行次數應為 1，實際為 ${regionHandled}`);
+          }
+          if (output.textContent !== "1") {
+            failedConditions.push(`中間區自身操作狀態應更新為 1，實際為「${output.textContent}」`);
+          }
+          if (containerHandled !== 1) {
+            failedConditions.push(`容器收到冒泡事件次數應為 1，實際為 ${containerHandled}`);
+          }
+          if (outputValueWhenContainerHandled !== "1") {
+            failedConditions.push(`容器處理事件時不應改動中間區狀態，觀察值應為 1，實際為「${outputValueWhenContainerHandled}」`);
+          }
+          if (event.defaultPrevented) {
+            failedConditions.push("事件被取消（defaultPrevented 為 true）");
+          }
+
+          return {
+            passed: failedConditions.length === 0,
+            detail: failedConditions.join("；")
+          };
         }
       },
       {
@@ -159,7 +178,12 @@ async function startTests() {
 
     for (const check of checks) {
       try {
-        record(check.name, Boolean(check.run()));
+        const result = check.run();
+        if (result && typeof result === "object" && "passed" in result) {
+          record(check.name, Boolean(result.passed), result.detail || "");
+        } else {
+          record(check.name, Boolean(result));
+        }
       } catch (error) {
         record(
           check.name,
