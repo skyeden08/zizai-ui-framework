@@ -194,7 +194,7 @@ record(
   !/overflow|resize|scroll|1fr|display:\s*none|visibility:\s*hidden/i.test(containerStyle) &&
   containerStyle.includes("grid-template-columns: auto auto auto") &&
   containerStyle.includes("grid-template-rows: auto auto") &&
-  !/width\s*:|height\s*:|flex\s*:/i.test(containerStyle)
+  !/^[ \t]*(?:width|height|flex)\s*:/im.test(containerStyle)
 );
 
 lines.push("");
