@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>第四階段第 1 項：上方區基本呈現</title>
+    <link rel="stylesheet" href="../../styles/variables.css" />
+    <style>
+      body {
+        margin: 0;
+        color: var(--ui-color-text, #182230);
+        font-family: var(--ui-font-family, system-ui, sans-serif);
+      }
+      main { padding: 1rem; }
+      #app {
+        min-height: 12rem;
+        border: 1px solid var(--ui-color-border, #cbd5e1);
+      }
+      #results {
+        min-height: 8rem;
+        padding: 1rem;
+        white-space: pre-wrap;
+        line-height: 1.6;
+        border: 1px solid var(--ui-color-border, #cbd5e1);
+      }
+    </style>
+    <script>
+      (() => {
+        window.__topBasicLines = [];
+        window.__topBasicCompleted = 0;
+        window.__topBasicReportError = (message) => {
+          const write = () => {
+            const results = document.getElementById("results");
+            if (!results) return;
+            results.textContent = [
+              ...(window.__topBasicLines || []),
+              `ERROR  ${message}`,
+              `已完成：${window.__topBasicCompleted || 0} 項`
+            ].join("\n");
+            results.dataset.status = "error";
+          };
+          if (document.getElementById("results")) write();
+          else document.addEventListener("DOMContentLoaded", write, { once: true });
+        };
+
+        window.addEventListener("error", (event) => {
+          window.__topBasicReportError(
+            event.target instanceof HTMLScriptElement
+              ? `腳本載入或模組解析失敗：${event.target.src || "未知來源"}`
+              : event.message || "發生未捕捉的執行錯誤"
+          );
+        }, true);
+
+        window.addEventListener("unhandledrejection", (event) => {
+          const reason = event.reason instanceof Error
+            ? `${event.reason.name}: ${event.reason.message}`
+            : String(event.reason);
+          window.__topBasicReportError(`未處理的 Promise 錯誤：${reason}`);
+        });
+      })();
+    </script>
+  </head>
+  <body>
+    <main>
+      <h1>第四階段第 1 項：上方區基本呈現</h1>
+      <p>本頁載入正式啟動入口，檢查上方區基本呈現、尚未建立提示及區域內部責任邊界。</p>
+      <div id="app" aria-label="UI 實際呈現"></div>
+      <h2>測試結果</h2>
+      <pre id="results" aria-live="polite" data-status="loading">測試頁已載入，等待 DOM 就緒並啟動測試…</pre>
+    </main>
+    <script type="module" src="./test-runner.js"></script>
+  </body>
+</html>
