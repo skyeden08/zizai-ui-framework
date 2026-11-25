@@ -7,9 +7,14 @@ const REGION_ROLES = new Map([
   ["zizai-right-region", "right-region"]
 ]);
 
+const DEFAULT_COLUMN_TRACKS = new Map([
+  ["left-region", "2fr"],
+  ["middle-region", "4fr"],
+  ["right-region", "4fr"]
+]);
+
 const connectedRegionInterfaces = new WeakMap();
 const coordinationRecords = new WeakMap();
-const initialLayoutWidths = new WeakMap();
 
 /**
  * Composition and coordination boundary for independently owned regions.
@@ -21,7 +26,6 @@ export class LayoutContainer extends HTMLElement {
     super();
     connectedRegionInterfaces.set(this, new Map());
     coordinationRecords.set(this, new Map());
-    initialLayoutWidths.set(this, null);
   }
 
   connectedCallback() {
@@ -39,7 +43,7 @@ export class LayoutContainer extends HTMLElement {
         grid-template-areas:
           "top top top"
           "left middle right";
-        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid-template-columns: 2fr 4fr 4fr;
         grid-template-rows: auto minmax(0, 1fr);
       }
 
@@ -49,21 +53,25 @@ export class LayoutContainer extends HTMLElement {
 
       ::slotted(zizai-top-region) {
         grid-area: top;
+        min-width: 0;
         min-height: 0;
       }
 
       ::slotted(zizai-left-region) {
         grid-area: left;
+        min-width: 0;
         min-height: 0;
       }
 
       ::slotted(zizai-middle-region) {
         grid-area: middle;
+        min-width: 0;
         min-height: 0;
       }
 
       ::slotted(zizai-right-region) {
         grid-area: right;
+        min-width: 0;
         min-height: 0;
       }
     `;
@@ -131,22 +139,9 @@ export class LayoutContainer extends HTMLElement {
     );
   }
 
-  #captureInitialLayoutWidths() {
-    const interfaces = connectedRegionInterfaces.get(this);
-    const widths = new Map();
-
-    for (const region of interfaces.keys()) {
-      widths.set(region, region.getBoundingClientRect().width);
-    }
-
-    initialLayoutWidths.set(this, widths);
-  }
-
   #applyRegionLayout() {
     const interfaces = connectedRegionInterfaces.get(this);
     const records = coordinationRecords.get(this);
-    const widths = initialLayoutWidths.get(this);
-    if (!widths) return;
 
     const regionsByRole = new Map(
       Array.from(interfaces.keys(), (region) => [
@@ -157,25 +152,19 @@ export class LayoutContainer extends HTMLElement {
 
     const tracks = ["left-region", "middle-region", "right-region"].map((role) => {
       const region = regionsByRole.get(role);
-      if (!region) return "auto";
+      if (!region) return DEFAULT_COLUMN_TRACKS.get(role);
 
       const record = records.get(region);
       if (record.regionStateRequest?.collapsed === true) {
         return "max-content";
       }
 
-      // The middle track is always the flexible remainder while expanded.
-      // The browser allocates the space left by the independent side tracks.
-      if (role === "middle-region") {
-        return "minmax(0, 1fr)";
+      const requestedWidth = record.spaceRequest?.width;
+      if (Number.isFinite(requestedWidth)) {
+        return `${requestedWidth}px`;
       }
 
-      const requestedWidth = record.spaceRequest?.width;
-      const width = Number.isFinite(requestedWidth)
-        ? requestedWidth
-        : widths.get(region);
-
-      return Number.isFinite(width) ? `${width}px` : "auto";
+      return DEFAULT_COLUMN_TRACKS.get(role);
     });
 
     const style = this.shadowRoot.querySelector("style");
@@ -198,16 +187,14 @@ export class LayoutContainer extends HTMLElement {
       if (typeof payload.width !== "number" || !Number.isFinite(payload.width) || payload.width < 0) {
         throw new TypeError("A width request must contain a finite non-negative number.");
       }
-      if (!initialLayoutWidths.get(this)) this.#captureInitialLayoutWidths();
     }
 
     if (
       request.kind === "region-state" &&
-      typeof payload.collapsed === "boolean" &&
-      !initialLayoutWidths.get(this)
+      Object.prototype.hasOwnProperty.call(payload, "collapsed") &&
+      typeof payload.collapsed !== "boolean"
     ) {
-      // The region sends this request before changing its own collapsed presentation.
-      this.#captureInitialLayoutWidths();
+      throw new TypeError("A collapsed state request must contain a boolean.");
     }
 
     if (request.kind === "space") {
