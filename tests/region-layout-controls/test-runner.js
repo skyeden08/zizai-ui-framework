@@ -75,7 +75,7 @@ try {
   const mounted = definitions.map(({ id, tag }) => {
     const element = document.createElement(tag);
     container.append(element);
-    const api = container.connectRegion(element);
+    const api = id === "top-region" ? null : container.connectRegion(element);
     return { id, element, api };
   });
 
@@ -89,7 +89,9 @@ try {
   record(
     "上方區不加入本項收合及寬度調整操作",
     !top.element.shadowRoot.querySelector('[data-role="collapse-toggle"]') &&
-      !top.element.shadowRoot.querySelector('[data-role="resize-handle"]')
+      !top.element.shadowRoot.querySelector('[data-role="resize-handle"]') &&
+      !Object.prototype.hasOwnProperty.call(top.element, "containerInterface") &&
+      !container.getCoordinationSnapshot().some((state) => state.regionId === "top-region")
   );
 
   record(
