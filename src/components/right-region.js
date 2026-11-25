@@ -1,5 +1,4 @@
 import { bindOpenClose } from "../capabilities/open-close.js";
-import { bindDragAdjustment } from "../capabilities/drag-adjustment.js";
 
 /**
  * 右側區（共視區） owns its collapse state, width state, and operation triggers.
@@ -7,8 +6,6 @@ import { bindDragAdjustment } from "../capabilities/drag-adjustment.js";
  */
 export class RightRegion extends HTMLElement {
   #expanded = true;
-  #width = null;
-  #dragStartWidth = null;
   #bindings = [];
 
   connectedCallback() {
@@ -139,23 +136,13 @@ export class RightRegion extends HTMLElement {
     slot.append(placeholder);
     content.append(slot);
 
-    const resizeHandle = document.createElement("div");
-    resizeHandle.className = "resize-handle";
-    resizeHandle.dataset.role = "resize-handle";
-    resizeHandle.setAttribute("role", "separator");
-    resizeHandle.setAttribute("aria-orientation", "vertical");
-    resizeHandle.setAttribute("aria-label", "調整右側區（共視區）寬度");
-    resizeHandle.tabIndex = 0;
-
-    frame.append(toolbar, content, resizeHandle);
+    frame.append(toolbar, content);
     root.append(style, frame);
   }
 
   #bindControls() {
     const toggle = this.shadowRoot.querySelector('[data-role="collapse-toggle"]');
     const content = this.shadowRoot.querySelector("#region-content");
-    const resizeHandle = this.shadowRoot.querySelector('[data-role="resize-handle"]');
-
     this.#bindings.push(
       bindOpenClose({
         trigger: toggle,
@@ -170,18 +157,5 @@ export class RightRegion extends HTMLElement {
       })
     );
 
-    this.#bindings.push(
-      bindDragAdjustment({
-        handle: resizeHandle,
-        onDragStart: () => {
-          this.#dragStartWidth = this.#width ?? this.getBoundingClientRect().width;
-        },
-        onDrag: ({ deltaX }) => {
-          const direction = -1;
-          this.#width = this.#dragStartWidth + deltaX * direction;
-          this.containerInterface?.requestSpace({ width: this.#width });
-        }
-      })
-    );
   }
 }
