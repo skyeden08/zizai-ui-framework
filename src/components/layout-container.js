@@ -32,13 +32,15 @@ export class LayoutContainer extends HTMLElement {
     style.textContent = `
       :host {
         display: grid;
+        width: 100%;
+        height: 100vh;
         min-width: 0;
         min-height: 0;
         grid-template-areas:
           "top top top"
           "left middle right";
         grid-template-columns: auto auto auto;
-        grid-template-rows: auto auto;
+        grid-template-rows: auto minmax(0, 1fr);
       }
 
       slot {
@@ -47,18 +49,22 @@ export class LayoutContainer extends HTMLElement {
 
       ::slotted(zizai-top-region) {
         grid-area: top;
+        min-height: 0;
       }
 
       ::slotted(zizai-left-region) {
         grid-area: left;
+        min-height: 0;
       }
 
       ::slotted(zizai-middle-region) {
         grid-area: middle;
+        min-height: 0;
       }
 
       ::slotted(zizai-right-region) {
         grid-area: right;
+        min-height: 0;
       }
     `;
 
