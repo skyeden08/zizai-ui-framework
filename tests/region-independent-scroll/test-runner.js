@@ -137,6 +137,9 @@ try {
     `實際比例：${initialRatios.map((ratio) => (ratio * 10).toFixed(2)).join(":")}`
   );
 
+  const middleRootChildren = Array.from(middle.shadowRoot.childNodes);
+  const middleContentChildren = Array.from(middleViewport.childNodes);
+
   const leftRequest = left.containerInterface.requestSpace({ width: 180 });
   const rightRequest = right.containerInterface.requestSpace({ width: 220 });
   const leftRect = left.getBoundingClientRect();
@@ -164,8 +167,6 @@ try {
       Math.abs(middle.getBoundingClientRect().width - 260) <= geometryTolerance
   );
 
-  const middleRootChildren = Array.from(middle.shadowRoot.childNodes);
-  const middleContentChildren = Array.from(middleViewport.childNodes);
   record(
     "容器調整 Grid 軌道前後未改動中間區內部節點",
     middleRootChildren.length === middle.shadowRoot.childNodes.length &&
