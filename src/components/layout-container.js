@@ -9,22 +9,19 @@ const REGION_ROLES = new Map([
 
 const connectedRegionInterfaces = new WeakMap();
 const coordinationRecords = new WeakMap();
+const initialLayoutWidths = new WeakMap();
 
 /**
  * Composition and coordination boundary for independently owned regions.
- *
- * The container establishes the four-region grid, records each region's
- * latest space and region-level coordination requests, and exposes an
- * immutable container-side snapshot. Request data is not written back to
- * region elements, attributes, styles, shadow trees, or internal operations.
- *
- * Concrete sizing rules and interactive region behavior remain deferred.
+ * The container changes only its own grid tracks in response to region requests.
+ * It never changes a region's internal state, content, or controls.
  */
 export class LayoutContainer extends HTMLElement {
   constructor() {
     super();
     connectedRegionInterfaces.set(this, new Map());
     coordinationRecords.set(this, new Map());
+    initialLayoutWidths.set(this, null);
   }
 
   connectedCallback() {
@@ -110,10 +107,6 @@ export class LayoutContainer extends HTMLElement {
     return regionInterface;
   }
 
-  /**
-   * Read-only container-layer coordination state.
-   * It contains only requests received by the container, never region internals.
-   */
   getCoordinationSnapshot() {
     const interfaces = connectedRegionInterfaces.get(this);
     const records = coordinationRecords.get(this);
@@ -132,6 +125,54 @@ export class LayoutContainer extends HTMLElement {
     );
   }
 
+  #captureInitialLayoutWidths() {
+    const interfaces = connectedRegionInterfaces.get(this);
+    const widths = new Map();
+
+    for (const region of interfaces.keys()) {
+      widths.set(region, region.getBoundingClientRect().width);
+    }
+
+    initialLayoutWidths.set(this, widths);
+  }
+
+  #applyRegionLayout() {
+    const interfaces = connectedRegionInterfaces.get(this);
+    const records = coordinationRecords.get(this);
+    const widths = initialLayoutWidths.get(this);
+    if (!widths) return;
+
+    const regionsByRole = new Map(
+      Array.from(interfaces.keys(), (region) => [
+        REGION_ROLES.get(region.localName),
+        region
+      ])
+    );
+
+    const tracks = ["left-region", "middle-region", "right-region"].map((role) => {
+      const region = regionsByRole.get(role);
+      if (!region) return "auto";
+
+      const record = records.get(region);
+      if (record.regionStateRequest?.collapsed === true) {
+        return "max-content";
+      }
+
+      const requestedWidth = record.spaceRequest?.width;
+      const width = Number.isFinite(requestedWidth)
+        ? requestedWidth
+        : widths.get(region);
+
+      return Number.isFinite(width) ? `${width}px` : "auto";
+    });
+
+    const style = this.shadowRoot.querySelector("style");
+    const hostRule = Array.from(style.sheet.cssRules).find(
+      (rule) => rule.selectorText === ":host"
+    );
+    hostRule?.style.setProperty("grid-template-columns", tracks.join(" "));
+  }
+
   #receiveRegionRequest(region, request) {
     const interfaces = connectedRegionInterfaces.get(this);
     if (interfaces.get(region) !== region.containerInterface) {
@@ -139,13 +180,38 @@ export class LayoutContainer extends HTMLElement {
     }
 
     const record = coordinationRecords.get(this).get(region);
+    const payload = request.request;
+
+    if (request.kind === "space" && Object.prototype.hasOwnProperty.call(payload, "width")) {
+      if (typeof payload.width !== "number" || !Number.isFinite(payload.width) || payload.width < 0) {
+        throw new TypeError("A width request must contain a finite non-negative number.");
+      }
+      if (!initialLayoutWidths.get(this)) this.#captureInitialLayoutWidths();
+    }
+
+    if (
+      request.kind === "region-state" &&
+      typeof payload.collapsed === "boolean" &&
+      !initialLayoutWidths.get(this)
+    ) {
+      // The region sends this request before changing its own collapsed presentation.
+      this.#captureInitialLayoutWidths();
+    }
+
     if (request.kind === "space") {
-      record.spaceRequest = request.request;
+      record.spaceRequest = payload;
     } else if (request.kind === "region-state") {
-      record.regionStateRequest = request.request;
+      record.regionStateRequest = payload;
     }
     record.lastRequestKind = request.kind;
     record.requestCount += 1;
+
+    if (
+      (request.kind === "space" && Object.prototype.hasOwnProperty.call(payload, "width")) ||
+      (request.kind === "region-state" && typeof payload.collapsed === "boolean")
+    ) {
+      this.#applyRegionLayout();
+    }
 
     this.dispatchEvent(
       new CustomEvent("zizai:region-request", {
