@@ -200,7 +200,6 @@ export class LayoutContainer extends HTMLElement {
 
     if (request.kind === "space") {
       record.spaceRequest = payload;
-
       const role = record.regionId;
       const pairRoles = role === "left-region"
         ? ["left-region", "middle-region"]
@@ -211,20 +210,19 @@ export class LayoutContainer extends HTMLElement {
           item
         ])
       );
-      const pairWidth = pairRoles.reduce((total, pairRole) => {
-        const pairRegion = regionsByRole.get(pairRole);
-        return total + (pairRegion?.getBoundingClientRect().width ?? 0);
-      }, 0);
-      const requestedWidth = Math.min(payload.width, pairWidth);
-      const companionWidth = Math.max(0, pairWidth - requestedWidth);
+      const requestedRegion = regionsByRole.get(role);
       const companionRole = pairRoles.find((pairRole) => pairRole !== role);
-      const requestedRecord = coordinationRecords.get(this).get(
-        regionsByRole.get(role)
-      );
-      const companionRecord = coordinationRecords.get(this).get(
-        regionsByRole.get(companionRole)
-      );
-
+      const companionRegion = regionsByRole.get(companionRole);
+      if (!requestedRegion || !companionRegion) {
+        throw new Error("Both regions in the requested adjacent pair must be connected.");
+      }
+      // Keep the adjacent pair's current combined width fixed for every move.
+      const pairWidth = requestedRegion.getBoundingClientRect().width +
+        companionRegion.getBoundingClientRect().width;
+      const requestedWidth = Math.min(Math.max(0, payload.width), pairWidth);
+      const companionWidth = pairWidth - requestedWidth;
+      const requestedRecord = coordinationRecords.get(this).get(requestedRegion);
+      const companionRecord = coordinationRecords.get(this).get(companionRegion);
       if (requestedRecord) requestedRecord.trackWidth = requestedWidth;
       if (companionRecord) companionRecord.trackWidth = companionWidth;
     } else if (request.kind === "region-state") {
