@@ -71,8 +71,8 @@ record(
   "容器以單一版面配置安排上方區及左、中、右區",
   containerStyle.includes('"top top top"') &&
   containerStyle.includes('"left middle right"') &&
-  containerStyle.includes("grid-template-columns: auto auto auto") &&
-  containerStyle.includes("grid-template-rows: auto auto") &&
+  containerStyle.includes("grid-template-columns: 2fr 4fr 4fr") &&
+  containerStyle.includes("grid-template-rows: auto minmax(0, 1fr)") &&
   containerStyle.includes("display: contents")
 );
 
@@ -210,11 +210,12 @@ record(
 );
 
 record(
-  "本項未提前實作收合、寬度調整、捲動或剩餘空間配置",
-  !/overflow|resize|scroll|1fr|display:\s*none|visibility:\s*hidden/i.test(containerStyle) &&
-  containerStyle.includes("grid-template-columns: auto auto auto") &&
-  containerStyle.includes("grid-template-rows: auto auto") &&
-  !/^[ \t]*(?:width|height|flex)\s*:/im.test(containerStyle)
+  "容器只調整自身 Grid，不接管區域內部操作",
+  containerStyle.includes("grid-template-columns: 2fr 4fr 4fr") &&
+  containerStyle.includes("grid-template-rows: auto minmax(0, 1fr)") &&
+  !/region\.(?:shadowRoot|hidden|setAttribute|removeAttribute)/.test(
+    (await fetch("../../src/components/layout-container.js").then((response) => response.text()))
+  )
 );
 
 lines.push("");
