@@ -39,7 +39,7 @@ export class LayoutContainer extends HTMLElement {
         grid-template-areas:
           "top top top"
           "left middle right";
-        grid-template-columns: auto auto auto;
+        grid-template-columns: auto minmax(0, 1fr) auto;
         grid-template-rows: auto minmax(0, 1fr);
       }
 
@@ -162,6 +162,12 @@ export class LayoutContainer extends HTMLElement {
       const record = records.get(region);
       if (record.regionStateRequest?.collapsed === true) {
         return "max-content";
+      }
+
+      // The middle track is always the flexible remainder while expanded.
+      // The browser allocates the space left by the independent side tracks.
+      if (role === "middle-region") {
+        return "minmax(0, 1fr)";
       }
 
       const requestedWidth = record.spaceRequest?.width;
