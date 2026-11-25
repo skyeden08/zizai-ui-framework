@@ -7,6 +7,8 @@ const REGION_ROLES = new Map([
   ["zizai-right-region", "right-region"]
 ]);
 
+const connectedRegionInterfaces = new WeakMap();
+
 /**
  * Composition boundary for independently owned regions.
  *
@@ -18,7 +20,7 @@ const REGION_ROLES = new Map([
 export class LayoutContainer extends HTMLElement {
   constructor() {
     super();
-    this.regionInterfaces = new Map();
+    connectedRegionInterfaces.set(this, new Map());
   }
 
   connectedCallback() {
@@ -48,7 +50,8 @@ export class LayoutContainer extends HTMLElement {
       throw new TypeError("The element is not a supported layout region.");
     }
 
-    const existing = this.regionInterfaces.get(region);
+    const interfaces = connectedRegionInterfaces.get(this);
+    const existing = interfaces.get(region);
     if (existing) return existing;
 
     if (Object.prototype.hasOwnProperty.call(region, "containerInterface")) {
@@ -57,7 +60,7 @@ export class LayoutContainer extends HTMLElement {
 
     const regionInterface = createRegionContainerInterface(
       regionId,
-      (request) => this.receiveRegionRequest(region, request)
+      (request) => this.#receiveRegionRequest(region, request)
     );
 
     Object.defineProperty(region, "containerInterface", {
@@ -67,12 +70,13 @@ export class LayoutContainer extends HTMLElement {
       writable: false
     });
 
-    this.regionInterfaces.set(region, regionInterface);
+    interfaces.set(region, regionInterface);
     return regionInterface;
   }
 
-  receiveRegionRequest(region, request) {
-    if (this.regionInterfaces.get(region) !== region.containerInterface) {
+  #receiveRegionRequest(region, request) {
+    const interfaces = connectedRegionInterfaces.get(this);
+    if (interfaces.get(region) !== region.containerInterface) {
       throw new Error("The request did not arrive through this region's interface.");
     }
 
