@@ -41,7 +41,7 @@ export function mountLayoutContainer(target) {
   return container;
 }
 
-function mountRegion(container, selector, tagName) {
+function mountRegion(container, selector, tagName, connectToContainer = true) {
   if (
     !(container instanceof HTMLElement) ||
     !container.matches("zizai-layout-container")
@@ -56,12 +56,21 @@ function mountRegion(container, selector, tagName) {
     container.append(region);
   }
 
-  container.connectRegion(region);
+  if (connectToContainer) {
+    container.connectRegion(region);
+  }
   return region;
 }
 
 export function mountTopRegion(container) {
-  return mountRegion(container, "zizai-top-region", "zizai-top-region");
+  // The container positions the top region through its grid slot only.
+  // The top region does not receive a container coordination interface.
+  return mountRegion(
+    container,
+    "zizai-top-region",
+    "zizai-top-region",
+    false
+  );
 }
 
 function mountLeftRegion(container) {
