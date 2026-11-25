@@ -138,9 +138,10 @@ async function startTests() {
         name: "本項未提前建立收合、寬度調整或捲動行為",
         run: () => {
           const style = getComputedStyle(region);
-          return style.width === "" || style.width === "auto" ||
-            (region.getAttribute("aria-expanded") === null &&
-             region.shadowRoot.querySelector("[aria-expanded], [data-resize-handle]") === null);
+          return region.getAttribute("aria-expanded") === null &&
+            region.shadowRoot.querySelector("[aria-expanded], [data-resize-handle]") === null &&
+            !["auto", "scroll"].includes(style.overflowX) &&
+            !["auto", "scroll"].includes(style.overflowY);
         }
       }
     ];
