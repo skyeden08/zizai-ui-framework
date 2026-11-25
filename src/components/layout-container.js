@@ -115,6 +115,7 @@ export class LayoutContainer extends HTMLElement {
     coordinationRecords.get(this).set(region, {
       regionId,
       spaceRequest: null,
+      trackWidth: null,
       regionStateRequest: null,
       lastRequestKind: null,
       requestCount: 0
@@ -160,9 +161,8 @@ export class LayoutContainer extends HTMLElement {
         return "max-content";
       }
 
-      const requestedWidth = record.spaceRequest?.width;
-      if (Number.isFinite(requestedWidth)) {
-        return `${requestedWidth}px`;
+      if (Number.isFinite(record.trackWidth)) {
+        return `${record.trackWidth}px`;
       }
 
       return DEFAULT_COLUMN_TRACKS.get(role);
@@ -200,6 +200,33 @@ export class LayoutContainer extends HTMLElement {
 
     if (request.kind === "space") {
       record.spaceRequest = payload;
+
+      const role = record.regionId;
+      const pairRoles = role === "left-region"
+        ? ["left-region", "middle-region"]
+        : ["middle-region", "right-region"];
+      const regionsByRole = new Map(
+        Array.from(interfaces.keys(), (item) => [
+          REGION_ROLES.get(item.localName),
+          item
+        ])
+      );
+      const pairWidth = pairRoles.reduce((total, pairRole) => {
+        const pairRegion = regionsByRole.get(pairRole);
+        return total + (pairRegion?.getBoundingClientRect().width ?? 0);
+      }, 0);
+      const requestedWidth = Math.min(payload.width, pairWidth);
+      const companionWidth = Math.max(0, pairWidth - requestedWidth);
+      const companionRole = pairRoles.find((pairRole) => pairRole !== role);
+      const requestedRecord = coordinationRecords.get(this).get(
+        regionsByRole.get(role)
+      );
+      const companionRecord = coordinationRecords.get(this).get(
+        regionsByRole.get(companionRole)
+      );
+
+      if (requestedRecord) requestedRecord.trackWidth = requestedWidth;
+      if (companionRecord) companionRecord.trackWidth = companionWidth;
     } else if (request.kind === "region-state") {
       record.regionStateRequest = payload;
     }
