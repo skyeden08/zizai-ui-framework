@@ -152,15 +152,31 @@ export class LayoutContainer extends HTMLElement {
       ])
     );
 
-    const tracks = ["left-region", "middle-region", "right-region"].map((role) => {
+    const roles = ["left-region", "middle-region", "right-region"];
+    const collapsedRoles = new Set(
+      roles.filter((role) => {
+        const region = regionsByRole.get(role);
+        return region && records.get(region).regionStateRequest?.collapsed === true;
+      })
+    );
+    const expandedRoles = roles.filter((role) => !collapsedRoles.has(role));
+
+    const tracks = roles.map((role) => {
       const region = regionsByRole.get(role);
       if (!region) return DEFAULT_COLUMN_TRACKS.get(role);
 
-      const record = records.get(region);
-      if (record.regionStateRequest?.collapsed === true) {
+      if (collapsedRoles.has(role)) {
         return "max-content";
       }
 
+      // While one or more regions are collapsed, share all remaining track
+      // space equally. Keep stored pixel widths untouched so expansion restores
+      // the exact pre-collapse widths, including user-adjusted widths.
+      if (collapsedRoles.size > 0) {
+        return expandedRoles.length > 0 ? "1fr" : DEFAULT_COLUMN_TRACKS.get(role);
+      }
+
+      const record = records.get(region);
       if (Number.isFinite(record.trackWidth)) {
         return `${record.trackWidth}px`;
       }
