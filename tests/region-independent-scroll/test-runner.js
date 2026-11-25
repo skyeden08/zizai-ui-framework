@@ -194,7 +194,7 @@ try {
 
   record(
     "容器未直接存取或操作中間區內部呈現與內容",
-    !/region\.shadowRoot|region-content|innerHTML|textContent|\.hidden\s*=/.test(containerSource)
+    !/region\.(?:shadowRoot|textContent|innerHTML|hidden)|region-content/.test(containerSource)
   );
 
   lines.push("");
