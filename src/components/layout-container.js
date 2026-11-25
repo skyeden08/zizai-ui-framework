@@ -199,7 +199,7 @@ export class LayoutContainer extends HTMLElement {
     }
 
     if (request.kind === "space") {
-      record.spaceRequest = payload;
+      const previousSpaceRequest = record.spaceRequest;
 
       const role = record.regionId;
       const pairRoles = role === "left-region"
@@ -230,8 +230,8 @@ export class LayoutContainer extends HTMLElement {
       // that delta to the current track width. This keeps the pair total fixed
       // and also handles a region whose width was changed as its neighbor's
       // companion track during an earlier drag.
-      const previousRequestedWidth = Number.isFinite(record.spaceRequest?.width)
-        ? record.spaceRequest.width
+      const previousRequestedWidth = Number.isFinite(previousSpaceRequest?.width)
+        ? previousSpaceRequest.width
         : requestedCurrentWidth;
       const dragDelta = payload.width - previousRequestedWidth;
       const requestedWidth = Math.max(
@@ -242,6 +242,7 @@ export class LayoutContainer extends HTMLElement {
 
       if (requestedRecord) requestedRecord.trackWidth = requestedWidth;
       if (companionRecord) companionRecord.trackWidth = companionWidth;
+      record.spaceRequest = payload;
     } else if (request.kind === "region-state") {
       record.regionStateRequest = payload;
     }
