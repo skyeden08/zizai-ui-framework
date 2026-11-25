@@ -2,6 +2,7 @@ import { LayoutContainer } from "./components/layout-container.js";
 import { TopRegion } from "./components/top-region.js";
 import { LeftRegion } from "./components/left-region.js";
 import { MiddleRegion } from "./components/middle-region.js";
+import { RightRegion } from "./components/right-region.js";
 
 const mountPoint = document.querySelector("#app");
 
@@ -20,6 +21,9 @@ if (!customElements.get("zizai-left-region")) {
 }
 if (!customElements.get("zizai-middle-region")) {
   customElements.define("zizai-middle-region", MiddleRegion);
+}
+if (!customElements.get("zizai-right-region")) {
+  customElements.define("zizai-right-region", RightRegion);
 }
 
 export function mountLayoutContainer(target) {
@@ -87,7 +91,24 @@ function mountMiddleRegion(container) {
   return region;
 }
 
+function mountRightRegion(container) {
+  if (
+    !(container instanceof HTMLElement) ||
+    !container.matches("zizai-layout-container")
+  ) {
+    throw new TypeError("A valid layout container is required.");
+  }
+
+  const existingRegion = container.querySelector(":scope > zizai-right-region");
+  if (existingRegion) return existingRegion;
+
+  const region = document.createElement("zizai-right-region");
+  container.append(region);
+  return region;
+}
+
 const container = mountLayoutContainer(mountPoint);
 mountTopRegion(container);
 mountLeftRegion(container);
 mountMiddleRegion(container);
+mountRightRegion(container);
