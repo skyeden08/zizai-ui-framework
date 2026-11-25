@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>第三階段第 9 項｜左、中、右區獨立收合及寬度調整</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 1.5rem;
+        color: #182230;
+        font-family: system-ui, sans-serif;
+      }
+
+      #fixture {
+        width: 100%;
+        min-height: 18rem;
+        border: 1px dashed #64748b;
+        overflow: auto;
+      }
+
+      #results {
+        white-space: pre-wrap;
+        line-height: 1.6;
+      }
+    </style>
+    <script type="module" src="./test-runner.js"></script>
+  </head>
+  <body>
+    <h1>第三階段第 9 項｜左、中、右區獨立收合及調整寬度</h1>
+    <p>本頁檢查三區各自觸發收合與寬度調整、透過既有單向介面請求容器協調空間，以及組裝既有開合與拖曳能力。測試不設定區域最小、最大或預設寬度限制；不驗證第 10 項。</p>
+    <div id="fixture"></div>
+    <h2>測試結果</h2>
+    <pre id="results" aria-live="polite">測試頁已載入，等待 DOM 就緒並啟動測試…</pre>
+  </body>
+</html>
