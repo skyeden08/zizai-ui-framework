@@ -1,8 +1,8 @@
 import { bindOpenClose } from "../capabilities/open-close.js";
 
 /**
- * 右側區（共視區） owns its collapse state and operation triggers.
- * Its width is adjusted only as the companion track of the middle/right divider.
+ * 右側區（共視區） owns its presentation, collapse state, and internal operations.
+ * Its width is adjusted through the existing middle/right divider coordination.
  */
 export class RightRegion extends HTMLElement {
   #expanded = true;
@@ -79,21 +79,11 @@ export class RightRegion extends HTMLElement {
       .placeholder {
         margin: 0;
       }
-
-      .conversation,
-      .input-area {
-        box-sizing: border-box;
-        min-width: 0;
-      }
-
-      .input-area {
-        margin-block-start: var(--ui-space-small, 0.5rem);
-      }
-
     `;
 
     const frame = document.createElement("section");
     frame.className = "region-frame";
+    frame.dataset.rightRegionVersion = "basic-presentation-1";
     frame.setAttribute("aria-label", "右側區（共視區）");
 
     const toolbar = document.createElement("header");
@@ -115,10 +105,13 @@ export class RightRegion extends HTMLElement {
     const content = document.createElement("div");
     content.className = "region-content";
     content.id = "region-content";
+    content.dataset.role = "region-content";
+
     const slot = document.createElement("slot");
     const placeholder = document.createElement("p");
     placeholder.className = "placeholder";
-    placeholder.textContent = "右側區內容尚未建立";
+    placeholder.dataset.role = "basic-placeholder";
+    placeholder.textContent = "尚未建立";
     slot.append(placeholder);
     content.append(slot);
 
@@ -142,6 +135,5 @@ export class RightRegion extends HTMLElement {
         }
       })
     );
-
   }
 }
