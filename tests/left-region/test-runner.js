@@ -103,10 +103,14 @@ async function startTests() {
       item.querySelector(".item-content")
     );
 
+    const containerRect = container.getBoundingClientRect();
+    const leftRect = left.getBoundingClientRect();
     record(
       "左側區基本呈現符合規劃，位於容器左側區域",
       left.shadowRoot.querySelector(".region-frame[aria-label='左側區']") !== null &&
-      getComputedStyle(left).gridArea === "left"
+      leftRect.width > 0 &&
+      leftRect.height > 0 &&
+      Math.abs(leftRect.left - containerRect.left) < 1
     );
 
     record(
