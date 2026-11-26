@@ -1,5 +1,5 @@
 import { bindOpenClose } from "../capabilities/open-close.js";
-import { bindDropdown } from "../capabilities/dropdown.js";
+import { bindDropdown, syncDropdownState } from "../capabilities/dropdown.js";
 
 /**
  * 右側區 owns its presentation, dropdown content and interaction state.
@@ -204,6 +204,7 @@ export class RightRegion extends HTMLElement {
           dropdownTrigger.textContent = option.textContent.trim();
           this.#dropdownExpanded = false;
           dropdownMenu.hidden = true;
+          syncDropdownState(dropdownTrigger, false);
         }
       })
     );
