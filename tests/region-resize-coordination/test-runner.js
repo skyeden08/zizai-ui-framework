@@ -12,7 +12,7 @@ async function startTests(){
  const record=(name,ok,detail="")=>{completed++;if(ok){passed++;lines.push(`PASS  ${name}`)}else{failed++;lines.push(`FAIL  ${name}${detail?` — ${detail}`:""}`)}render()};
  const frame=()=>new Promise(resolve=>requestAnimationFrame(resolve));
  const w=r=>r.getBoundingClientRect().width, close=(a,b,t=2)=>Math.abs(a-b)<=t;
- const widths=()=>[w(left),w(middle),w(right)], fmt=a=>a.map(x=>x.toFixed(1)).join(" / ");
+ const fmt=a=>a.map(x=>x.toFixed(1)).join(" / ");
  const drag=async(region,dx,id)=>{
   const h=region.shadowRoot.querySelector('[data-role="resize-handle"]');if(!h)throw Error("找不到分隔線拖曳把手");
   h.setPointerCapture=()=>{};const init={bubbles:true,cancelable:true,pointerId:id,isPrimary:true,button:0,clientX:200};
@@ -28,6 +28,7 @@ async function startTests(){
   for(const [n,k] of [["zizai-layout-container",LayoutContainer],["zizai-top-region",TopRegion],["zizai-left-region",LeftRegion],["zizai-middle-region",MiddleRegion],["zizai-right-region",RightRegion]])if(!customElements.get(n))customElements.define(n,k);
   const container=document.createElement("zizai-layout-container");
   const top=document.createElement("zizai-top-region"),left=document.createElement("zizai-left-region"),middle=document.createElement("zizai-middle-region"),right=document.createElement("zizai-right-region");
+  const widths=()=>[w(left),w(middle),w(right)];
   container.append(top,left,middle,right);fixture.append(container);container.connectRegion(left);container.connectRegion(middle);container.connectRegion(right);await frame();
   const initial=widths(),containerWidth=container.getBoundingClientRect().width,leftEdge=left.getBoundingClientRect().left,rightEdge=right.getBoundingClientRect().right;
   record("初始比例維持 2:4:4",close(initial[1]/initial[0],2,.03)&&close(initial[2]/initial[0],2,.03),`實際寬度：${fmt(initial)}`);
