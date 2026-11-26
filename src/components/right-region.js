@@ -46,7 +46,7 @@ export class RightRegion extends HTMLElement {
         font-family: var(--ui-font-family, system-ui, sans-serif);
       }
 
-      .region-toolbar {
+      .region-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -87,7 +87,7 @@ export class RightRegion extends HTMLElement {
     frame.setAttribute("aria-label", "右側區（共視區）");
 
     const toolbar = document.createElement("header");
-    toolbar.className = "region-toolbar";
+    toolbar.className = "region-header";
 
     const label = document.createElement("span");
     label.className = "region-label";
