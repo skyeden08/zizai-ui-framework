@@ -1,16 +1,8 @@
 import { bindOpenClose } from "../capabilities/open-close.js";
 import { bindDragAdjustment } from "../capabilities/drag-adjustment.js";
 
-const LEFT_CONTENT_ITEMS = [
-  { key: "connection-status", label: "連線狀態" },
-  { key: "account", label: "登入／帳號" },
-  { key: "tasks", label: "任務清單／任務切換" },
-  { key: "cognition", label: "認知現況" },
-  { key: "navigation-help", label: "導覽／說明入口" }
-];
-
 /**
- * The left region owns its presentation, item states, and operation triggers.
+ * The left region owns its presentation and internal operations.
  * It sends only region-level layout requests through its existing interface.
  */
 export class LeftRegion extends HTMLElement {
@@ -86,40 +78,8 @@ export class LeftRegion extends HTMLElement {
         margin-block-start: var(--ui-space-small, 0.5rem);
       }
 
-      .region-content[hidden],
-      .item-content[hidden] {
+      .region-content[hidden] {
         display: none;
-      }
-
-      .content-item {
-        min-width: 0;
-        border-block-end: 1px solid var(--ui-color-border, #cbd5e1);
-      }
-
-      .item-toggle {
-        display: block;
-        box-sizing: border-box;
-        width: 100%;
-        padding: var(--ui-space-small, 0.5rem);
-        border: 0;
-        color: inherit;
-        background: transparent;
-        font: inherit;
-        text-align: start;
-        cursor: pointer;
-      }
-
-      .item-toggle:focus-visible,
-      .collapse-toggle:focus-visible,
-      .resize-handle:focus-visible {
-        outline: 2px solid var(--ui-color-accent, #2457a6);
-        outline-offset: -2px;
-      }
-
-      .item-content {
-        box-sizing: border-box;
-        min-width: 0;
-        padding: 0 var(--ui-space-small, 0.5rem) var(--ui-space-small, 0.5rem);
       }
 
       .placeholder {
@@ -137,13 +97,16 @@ export class LeftRegion extends HTMLElement {
         user-select: none;
       }
 
-      .resize-handle:focus-visible {
+      .resize-handle:focus-visible,
+      .collapse-toggle:focus-visible {
+        outline: 2px solid var(--ui-color-accent, #2457a6);
         outline-offset: -2px;
       }
     `;
 
     const frame = document.createElement("section");
     frame.className = "region-frame";
+    frame.dataset.leftRegionVersion = "basic-structure-2";
     frame.setAttribute("aria-label", "左側區");
 
     const toolbar = document.createElement("header");
@@ -165,35 +128,12 @@ export class LeftRegion extends HTMLElement {
     content.className = "region-content";
     content.id = "left-region-content";
 
-    for (const item of LEFT_CONTENT_ITEMS) {
-      const itemSection = document.createElement("section");
-      itemSection.className = "content-item";
-      itemSection.dataset.role = "content-item";
-      itemSection.dataset.item = item.key;
-      itemSection.setAttribute("aria-label", item.label);
-
-      const toggle = document.createElement("button");
-      toggle.className = "item-toggle";
-      toggle.type = "button";
-      toggle.dataset.role = "item-toggle";
-      toggle.dataset.item = item.key;
-      toggle.setAttribute("aria-controls", `left-item-${item.key}`);
-      toggle.textContent = item.label;
-
-      const itemContent = document.createElement("div");
-      itemContent.className = "item-content";
-      itemContent.id = `left-item-${item.key}`;
-
-      const slot = document.createElement("slot");
-      slot.name = item.key;
-      const placeholder = document.createElement("p");
-      placeholder.className = "placeholder";
-      placeholder.textContent = "尚未建立";
-      slot.append(placeholder);
-      itemContent.append(slot);
-      itemSection.append(toggle, itemContent);
-      content.append(itemSection);
-    }
+    const contentSlot = document.createElement("slot");
+    const placeholder = document.createElement("p");
+    placeholder.className = "placeholder";
+    placeholder.textContent = "尚未建立";
+    contentSlot.append(placeholder);
+    content.append(contentSlot);
 
     const resizeHandle = document.createElement("div");
     resizeHandle.className = "resize-handle";
@@ -216,6 +156,10 @@ export class LeftRegion extends HTMLElement {
       '[data-role="resize-handle"]'
     );
 
+    if (!collapseToggle || !regionContent || !resizeHandle) {
+      throw new Error("左側區基本結構缺少區域級控制或內容容器。");
+    }
+
     this.#bindings.push(
       bindOpenClose({
         trigger: collapseToggle,
@@ -229,25 +173,6 @@ export class LeftRegion extends HTMLElement {
         }
       })
     );
-
-    for (const itemSection of this.shadowRoot.querySelectorAll(
-      '[data-role="content-item"]'
-    )) {
-      const toggle = itemSection.querySelector('[data-role="item-toggle"]');
-      const itemContent = itemSection.querySelector(".item-content");
-      let expanded = true;
-
-      this.#bindings.push(
-        bindOpenClose({
-          trigger: toggle,
-          getExpanded: () => expanded,
-          onExpandedChange: (nextExpanded) => {
-            expanded = nextExpanded;
-            itemContent.hidden = !nextExpanded;
-          }
-        })
-      );
-    }
 
     this.#bindings.push(
       bindDragAdjustment({
