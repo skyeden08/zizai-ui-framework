@@ -97,7 +97,7 @@ async function startTests() {
     const leftRect = left.getBoundingClientRect();
     record(
       "左側區基本結構存在且位於容器左側",
-      Boolean(frame && regionContent && regionToggle && resizeHandle) &&
+      Boolean(frame && frame.dataset.leftRegionVersion === "basic-structure-2" && regionContent && regionToggle && resizeHandle) &&
       leftRect.width > 0 &&
       leftRect.height > 0 &&
       Math.abs(leftRect.left - containerRect.left) < 1,
@@ -108,11 +108,10 @@ async function startTests() {
       "左側區內容以單一「尚未建立」提示呈現，未預設內容分類",
       Boolean(placeholder) &&
       placeholder.textContent.trim() === "尚未建立" &&
-      leftRoot.querySelectorAll(".placeholder").length === 1 &&
+      leftRoot?.querySelectorAll(".placeholder").length === 1 &&
       leftRoot.querySelectorAll('[data-role="content-item"], [data-role="item-toggle"], .item-content').length === 0
     );
 
-    const coordinationBeforeCollapse = container.getCoordinationSnapshot();
     let collapsed = false;
     let expanded = false;
     if (regionContent && regionToggle) {
