@@ -34,7 +34,7 @@
               ...(window.__rightBasicTestLines || []),
               `ERROR  ${message}`,
               `已完成：${window.__rightBasicTestCompleted || 0} 項`
-            ].join("\\n");
+            ].join("\n");
             results.dataset.status = "error";
           };
           if (document.getElementById("results")) write();
