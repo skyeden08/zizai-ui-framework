@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>左側區獨立測試</title>
+    <title>第四階段第 2 項：左側區基本呈現</title>
     <link rel="stylesheet" href="../../styles/variables.css" />
     <style>
       body {
@@ -13,7 +13,7 @@
         font-family: var(--ui-font-family, system-ui, sans-serif);
       }
       main { padding: 1rem; }
-      #fixture { min-height: 12rem; }
+      #fixture { min-height: 32.5rem; }
       #results {
         min-height: 8rem;
         padding: 1rem;
@@ -60,8 +60,8 @@
   </head>
   <body>
     <main>
-      <h1>左側區獨立測試</h1>
-      <p>本頁獨立載入左側區與版面容器，不啟動平台入口，也不載入其他區域。</p>
+      <h1>第四階段第 2 項：左側區基本呈現</h1>
+      <p>本頁檢查左側區基本結構、已確認的內容位置及「尚未建立」提示，並確認左側區自身的項目開合與既有區域行為仍可運作。其他區域僅作為版面協調測試環境，不在本項建立或驗收範圍。</p>
       <div id="fixture"></div>
       <h2>測試結果</h2>
       <pre id="results" aria-live="polite" data-status="loading">測試頁已載入，等待 DOM 就緒並啟動測試…</pre>
