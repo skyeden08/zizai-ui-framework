@@ -1,0 +1,30 @@
+import {LayoutContainer} from "../../src/components/layout-container.js";
+import {LeftRegion} from "../../src/components/left-region.js?rev=basic-structure-2";
+import {MiddleRegion} from "../../src/components/middle-region.js?rev=dialog-basic-1";
+import {RightRegion} from "../../src/components/right-region.js";
+let started=false;
+async function startTests(){
+ if(started)return;started=true;const out=document.getElementById("results"),fixture=document.getElementById("fixture"),lines=[];let done=0,pass=0,fail=0;window.__middleBasicTestLines=lines;
+ const render=m=>{if(!out)return window.__middleBasicReportError?.("找不到結果容器");out.textContent=[...lines,`已完成：${done} 項；通過：${pass}；未通過：${fail}`,m||""].filter(Boolean).join("\\n");out.dataset.status=m?.startsWith("ERROR")?"error":"running";window.__middleBasicTestCompleted=done};
+ const test=(name,ok,detail="")=>{done++;if(ok){pass++;lines.push(`PASS  ${name}`)}else{fail++;lines.push(`FAIL  ${name}${detail?` — ${detail}`:""}`)}render("")};
+ const frame=()=>new Promise(r=>requestAnimationFrame(r)),w=e=>e.getBoundingClientRect().width,near=(a,b,t=2)=>Math.abs(a-b)<=t;
+ try{
+  if(!out||!fixture)throw Error("缺少測試結果區或掛載區");if(typeof PointerEvent!=="function")throw Error("瀏覽器不支援 PointerEvent");
+  for(const [tag,ctor] of [["zizai-layout-container",LayoutContainer],["zizai-left-region",LeftRegion],["zizai-middle-region",MiddleRegion],["zizai-right-region",RightRegion]])if(!customElements.get(tag))customElements.define(tag,ctor);
+  const box=document.createElement("zizai-layout-container");box.style.height="520px";const left=document.createElement("zizai-left-region"),mid=document.createElement("zizai-middle-region"),right=document.createElement("zizai-right-region");box.append(left,mid,right);fixture.replaceChildren(box);box.connectRegion(left);box.connectRegion(mid);box.connectRegion(right);await frame();await frame();
+  const root=mid.shadowRoot,frameEl=root?.querySelector(".region-frame"),content=root?.querySelector("#region-content"),toggle=root?.querySelector('[data-role="collapse-toggle"]'),handle=root?.querySelector('[data-role="resize-handle"]'),conv=root?.querySelector('[data-role="conversation-position"]'),input=root?.querySelector('[data-role="input-position"]'),cp=conv?.querySelector(".placeholder"),ip=input?.querySelector(".placeholder"),initial=[w(left),w(mid),w(right)];
+  test("中間區基本呈現符合與 AI 對話方塊定位",!!frameEl&&frameEl.dataset.middleRegionVersion==="basic-presentation-1"&&frameEl.getAttribute("aria-label")==="中間區對話方塊"&&w(mid)>0&&mid.getBoundingClientRect().height>0);
+  test("對話呈現位置與輸入位置具備結構，未定義內容標示尚未建立",!!conv&&!!input&&!!cp&&!!ip&&conv.getAttribute("aria-label")==="對話呈現位置"&&input.getAttribute("aria-label")==="對話輸入位置"&&conv.querySelector(".position-label")?.textContent==="對話呈現位置"&&input.querySelector(".position-label")?.textContent==="對話輸入位置"&&cp.textContent.trim()==="尚未建立"&&ip.textContent.trim()==="尚未建立"&&root.querySelectorAll(".placeholder").length===2);
+  test("未提前實作對話功能、AI 串接、訊息傳送與成果展示",root.querySelector("form,input,textarea,select,[data-role='send-message'],[data-role='message-list'],[data-role='result-area'],slot[name='results'],[data-ai-endpoint]")===null&&root.querySelectorAll("button").length===1&&root.querySelector('[data-role="collapse-toggle"]')===toggle&&!!root.querySelector("slot[name='conversation']")&&!!root.querySelector("slot[name='input']"));
+  test("中間區自身持有內容位置，容器不接管內部呈現",!!conv&&!!input&&root.contains(conv)&&root.contains(input)&&box.shadowRoot.querySelector(".conversation,.input-area,[data-role='conversation-position'],[data-role='input-position'],form,input,textarea")===null);
+  let collapse=false,expand=false;if(content&&toggle){toggle.click();const a=box.getCoordinationSnapshot().find(x=>x.regionId==="middle-region");collapse=content.hidden&&toggle.getAttribute("aria-expanded")==="false"&&a?.regionStateRequest?.collapsed===true;toggle.click();const b=box.getCoordinationSnapshot().find(x=>x.regionId==="middle-region");expand=!content.hidden&&toggle.getAttribute("aria-expanded")==="true"&&b?.regionStateRequest?.collapsed===false}
+  test("既有區域級收合與展開仍正常",collapse&&expand);
+  let scroll=false;if(content){const probe=document.createElement("div");probe.slot="conversation";probe.style.minHeight="1200px";probe.textContent="捲動測試";mid.append(probe);await frame();const max=content.scrollHeight-content.clientHeight;content.scrollTop=max;await frame();scroll=max>0&&content.scrollTop>0&&getComputedStyle(content).overflowY==="auto";probe.remove()}
+  test("既有獨立垂直捲動仍正常",scroll);
+  let resize=false;if(handle){const lw=w(left),mw=w(mid),rw=w(right),count=box.getCoordinationSnapshot().find(x=>x.regionId==="middle-region")?.requestCount??0;handle.setPointerCapture=()=>{};handle.dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,cancelable:true,pointerId:81,pointerType:"mouse",isPrimary:true,button:0,clientX:200}));handle.dispatchEvent(new PointerEvent("pointermove",{bubbles:true,cancelable:true,pointerId:81,pointerType:"mouse",isPrimary:true,button:0,buttons:1,clientX:230}));handle.dispatchEvent(new PointerEvent("pointerup",{bubbles:true,cancelable:true,pointerId:81,pointerType:"mouse",isPrimary:true,button:0,clientX:230}));await frame();const s=box.getCoordinationSnapshot().find(x=>x.regionId==="middle-region");resize=s?.requestCount>count&&s?.lastRequestKind==="space"&&w(mid)>mw+8&&w(right)<rw-8&&near(w(left),lw)}
+  test("既有寬度調整仍正常",resize);
+  test("2:4:4 初始比例仍正常",initial.every(x=>x>0)&&near(initial[1]/initial[0],2,.04)&&near(initial[2]/initial[0],2,.04),`實際寬度：${initial.map(x=>x.toFixed(1)).join(" / ")}`);
+  render(`測試結束：${fail===0?"全部通過":"有項目未通過"}`);out.dataset.status=fail===0?"passed":"failed";
+ }catch(e){const m=e instanceof Error?`${e.name}: ${e.message}`:String(e);lines.push(`ERROR  ${m}`);render(`ERROR 已中止；已完成 ${done} 項；原因：${m}`);if(out)out.dataset.status="error"}
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",startTests,{once:true});else startTests();
