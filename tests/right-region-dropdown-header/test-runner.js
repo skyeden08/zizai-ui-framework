@@ -133,7 +133,7 @@ async function startTests() {
 
     test(
       "右側區直接組裝第二階段既有下拉選單能力，未另寫互動能力",
-      /import\s*\{\s*bindDropdown\s*\}\s*from\s*["']\.\.\/capabilities\/dropdown\.js["']/.test(rightSource) &&
+      /import\s*\{[^}]*\bbindDropdown\b[^}]*\}\s*from\s*["']\.\.\/capabilities\/dropdown\.js["']/.test(rightSource) &&
         /bindDropdown\s*\(/.test(rightSource) &&
         /export function bindDropdown\s*\(/.test(capabilitySource) &&
         !/function\s+(handleDropdown|toggleDropdown|bindRightDropdown)\b/.test(rightSource)
