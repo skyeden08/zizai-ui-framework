@@ -84,10 +84,9 @@ export class MiddleRegion extends HTMLElement {
       }
 
       .conversation,
-      .input-area {
-        box-sizing: border-box;
-        min-width: 0;
-      }
+      .input-area { box-sizing: border-box; min-width: 0; }
+      .position-label { margin: 0 0 var(--ui-space-small, 0.5rem); color: var(--ui-color-text, #182230); font-size: 0.875rem; font-weight: 600; }
+      .placeholder { margin: 0; color: var(--ui-color-muted, #526174); }
 
       .input-area {
         margin-block-start: var(--ui-space-small, 0.5rem);
@@ -111,7 +110,8 @@ export class MiddleRegion extends HTMLElement {
 
     const frame = document.createElement("section");
     frame.className = "region-frame";
-    frame.setAttribute("aria-label", "中間區");
+    frame.dataset.middleRegionVersion = "basic-presentation-1";
+    frame.setAttribute("aria-label", "中間區對話方塊");
 
     const toolbar = document.createElement("header");
     toolbar.className = "region-toolbar";
@@ -134,25 +134,33 @@ export class MiddleRegion extends HTMLElement {
     content.id = "region-content";
     const conversation = document.createElement("section");
     conversation.className = "conversation";
-    conversation.setAttribute("aria-label", "對話呈現區");
+    conversation.dataset.role = "conversation-position";
+    conversation.setAttribute("aria-label", "對話呈現位置");
+    const conversationLabel = document.createElement("h2");
+    conversationLabel.className = "position-label";
+    conversationLabel.textContent = "對話呈現位置";
     const conversationSlot = document.createElement("slot");
     conversationSlot.name = "conversation";
     const conversationPlaceholder = document.createElement("p");
     conversationPlaceholder.className = "placeholder";
-    conversationPlaceholder.textContent = "對話內容尚未建立";
+    conversationPlaceholder.textContent = "尚未建立";
     conversationSlot.append(conversationPlaceholder);
-    conversation.append(conversationSlot);
+    conversation.append(conversationLabel, conversationSlot);
 
     const inputArea = document.createElement("section");
     inputArea.className = "input-area";
-    inputArea.setAttribute("aria-label", "對話輸入區");
+    inputArea.dataset.role = "input-position";
+    inputArea.setAttribute("aria-label", "對話輸入位置");
+    const inputLabel = document.createElement("h2");
+    inputLabel.className = "position-label";
+    inputLabel.textContent = "對話輸入位置";
     const inputSlot = document.createElement("slot");
     inputSlot.name = "input";
     const inputPlaceholder = document.createElement("p");
     inputPlaceholder.className = "placeholder";
-    inputPlaceholder.textContent = "對話輸入操作尚未建立";
+    inputPlaceholder.textContent = "尚未建立";
     inputSlot.append(inputPlaceholder);
-    inputArea.append(inputSlot);
+    inputArea.append(inputLabel, inputSlot);
 
     content.append(conversation, inputArea);
 
