@@ -112,6 +112,8 @@ async function startTests() {
     test(
       "右側區基本呈現符合共視區定位",
       !!regionFrame &&
+        !!root.querySelector(".region-header") &&
+        root.querySelector(".region-toolbar") === null &&
         regionFrame.dataset.rightRegionVersion === "basic-presentation-1" &&
         regionFrame.getAttribute("aria-label") === "右側區（共視區）" &&
         label?.textContent.trim() === "右側區（共視區）" &&
@@ -127,6 +129,7 @@ async function startTests() {
         root.querySelectorAll(".placeholder").length === 1 &&
         regionContent.querySelectorAll("slot").length === 1 &&
         regionContent.querySelector("slot").name === "" &&
+        regionContent.textContent.trim() === "尚未建立" &&
         !root.querySelector("[data-category], [data-content-type], [data-role='content-category']")
     );
 
@@ -146,7 +149,7 @@ async function startTests() {
 
     test(
       "未提前實作第 5～7 項、裝置適配或中間區跨區連接",
-      root.querySelector("select, [role='combobox'], [data-role*='dropdown'], [data-role*='common-tool'], [data-role='co-view-content']") === null &&
+      root.querySelector("select, [role='combobox'], [data-role*='dropdown'], [class*='dropdown'], .common-toolbar, .common-tools, .tool-list, [data-role*='common-tool'], [data-role='co-view-content'], .co-view-content") === null &&
         root.querySelectorAll("button").length === 1 &&
         root.querySelector('[data-role="collapse-toggle"]') === toggle &&
         !/@media|matchMedia|innerWidth|mobile|tablet|deviceType/i.test(rightSource) &&
