@@ -165,6 +165,7 @@ async function startTests() {
         trigger.dataset.selectedValue === "temporary-test-value" &&
         trigger.textContent.trim() === "暫存測試選項" &&
         menu.hidden === true &&
+        trigger.getAttribute("aria-expanded") === "false" &&
         !container.shadowRoot.querySelector("[data-dropdown-option]") &&
         !container.shadowRoot.querySelector("[data-selected-value]");
       option.remove();
