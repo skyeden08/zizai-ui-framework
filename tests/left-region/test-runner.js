@@ -1,5 +1,5 @@
 import { LayoutContainer } from "../../src/components/layout-container.js";
-import { LeftRegion } from "../../src/components/left-region.js";
+import { LeftRegion } from "../../src/components/left-region.js?rev=basic-structure-2";
 import { MiddleRegion } from "../../src/components/middle-region.js";
 import { RightRegion } from "../../src/components/right-region.js";
 
@@ -86,149 +86,105 @@ async function startTests() {
     await nextFrame();
     await nextFrame();
 
-    const itemDefinitions = [
-      ["connection-status", "連線狀態"],
-      ["account", "登入／帳號"],
-      ["tasks", "任務清單／任務切換"],
-      ["cognition", "認知現況"],
-      ["navigation-help", "導覽／說明入口"]
-    ];
-    const itemSections = Array.from(
-      left.shadowRoot.querySelectorAll('[data-role="content-item"]')
-    );
-    const itemButtons = itemSections.map((item) =>
-      item.querySelector('[data-role="item-toggle"]')
-    );
-    const itemContents = itemSections.map((item) =>
-      item.querySelector(".item-content")
-    );
+    const leftRoot = left.shadowRoot;
+    const frame = leftRoot?.querySelector(".region-frame[aria-label='左側區']");
+    const regionContent = leftRoot?.querySelector("#left-region-content") ?? null;
+    const regionToggle = leftRoot?.querySelector('[data-role="collapse-toggle"]') ?? null;
+    const resizeHandle = leftRoot?.querySelector('[data-role="resize-handle"]') ?? null;
+    const placeholder = regionContent?.querySelector(".placeholder") ?? null;
 
     const containerRect = container.getBoundingClientRect();
     const leftRect = left.getBoundingClientRect();
     record(
-      "左側區基本呈現符合規劃，位於容器左側區域",
-      left.shadowRoot.querySelector(".region-frame[aria-label='左側區']") !== null &&
+      "左側區基本結構存在且位於容器左側",
+      Boolean(frame && regionContent && regionToggle && resizeHandle) &&
       leftRect.width > 0 &&
       leftRect.height > 0 &&
-      Math.abs(leftRect.left - containerRect.left) < 1
+      Math.abs(leftRect.left - containerRect.left) < 1,
+      "缺少必要的左側區結構節點"
     );
 
     record(
-      "已確認的五類呈現位置均存在且未增加其他類別",
-      itemSections.length === itemDefinitions.length &&
-      itemSections.every((item, index) =>
-        item.dataset.item === itemDefinitions[index][0] &&
-        itemButtons[index]?.textContent === itemDefinitions[index][1]
-      )
+      "左側區內容以單一「尚未建立」提示呈現，未預設內容分類",
+      Boolean(placeholder) &&
+      placeholder.textContent.trim() === "尚未建立" &&
+      leftRoot.querySelectorAll(".placeholder").length === 1 &&
+      leftRoot.querySelectorAll('[data-role="content-item"], [data-role="item-toggle"], .item-content').length === 0
     );
 
-    record(
-      "所有尚未定義的內容均標示「尚未建立」",
-      itemContents.length === itemDefinitions.length &&
-      itemContents.every((content) =>
-        content.querySelector(".placeholder")?.textContent === "尚未建立"
-      )
-    );
+    const coordinationBeforeCollapse = container.getCoordinationSnapshot();
+    let collapsed = false;
+    let expanded = false;
+    if (regionContent && regionToggle) {
+      regionToggle.click();
+      const collapsedRecord = container.getCoordinationSnapshot()
+        .find((item) => item.regionId === "left-region");
+      collapsed = regionContent.hidden &&
+        regionToggle.getAttribute("aria-expanded") === "false" &&
+        collapsedRecord?.regionStateRequest?.collapsed === true;
 
-    record(
-      "五類內容各自具有獨立開合控制",
-      itemButtons.length === itemDefinitions.length &&
-      itemButtons.every((button, index) =>
-        button instanceof HTMLButtonElement &&
-        button.getAttribute("aria-controls") === itemContents[index]?.id &&
-        button.getAttribute("aria-expanded") === "true"
-      )
-    );
-
-    let independentItemToggles = itemButtons.length === itemDefinitions.length;
-    for (let index = 0; index < itemButtons.length; index += 1) {
-      const before = itemContents.map((content) => content.hidden);
-      itemButtons[index].click();
-      const changedOnlyTarget = itemContents.every((content, itemIndex) =>
-        itemIndex === index
-          ? content.hidden !== before[itemIndex]
-          : content.hidden === before[itemIndex]
-      );
-      itemButtons[index].click();
-      const restored = itemContents.every((content, itemIndex) =>
-        content.hidden === before[itemIndex]
-      );
-      independentItemToggles = independentItemToggles &&
-        changedOnlyTarget && restored;
+      regionToggle.click();
+      const expandedRecord = container.getCoordinationSnapshot()
+        .find((item) => item.regionId === "left-region");
+      expanded = !regionContent.hidden &&
+        regionToggle.getAttribute("aria-expanded") === "true" &&
+        expandedRecord?.regionStateRequest?.collapsed === false;
     }
-    record(
-      "各項目可獨立開合，不改變其他項目的開合狀態",
-      independentItemToggles
-    );
+    record("左側區區域級收合與展開正常", collapsed && expanded,
+      "必要節點不存在時不讀取 null.hidden");
 
-    const regionContent = left.shadowRoot.querySelector("#left-region-content");
-    const regionToggle = left.shadowRoot.querySelector(
-      '[data-role="collapse-toggle"]'
-    );
-    const initialSnapshot = container.getCoordinationSnapshot();
-    regionToggle.click();
-    const collapsedSnapshot = container.getCoordinationSnapshot();
-    const collapsed = regionContent.hidden &&
-      regionToggle.getAttribute("aria-expanded") === "false" &&
-      collapsedSnapshot.find((item) => item.regionId === "left-region")
-        ?.regionStateRequest?.collapsed === true;
-    regionToggle.click();
-    const expandedSnapshot = container.getCoordinationSnapshot();
-    const expanded = !regionContent.hidden &&
-      regionToggle.getAttribute("aria-expanded") === "true" &&
-      expandedSnapshot.find((item) => item.regionId === "left-region")
-        ?.regionStateRequest?.collapsed === false;
-    record("左側區既有收合與展開行為維持", collapsed && expanded);
+    let scrollWorks = false;
+    if (regionContent) {
+      const tallContent = document.createElement("div");
+      tallContent.style.minHeight = "1200px";
+      tallContent.textContent = "獨立捲動測試內容";
+      regionContent.append(tallContent);
+      await nextFrame();
+      const scrollTopBefore = regionContent.scrollTop;
+      const maxScroll = regionContent.scrollHeight - regionContent.clientHeight;
+      regionContent.scrollTop = maxScroll;
+      await nextFrame();
+      scrollWorks = maxScroll > 0 &&
+        regionContent.scrollTop > scrollTopBefore &&
+        getComputedStyle(regionContent).overflowY === "auto";
+      tallContent.remove();
+    }
+    record("左側區獨立垂直捲動正常", scrollWorks);
 
-    const tallContent = document.createElement("div");
-    tallContent.slot = "connection-status";
-    tallContent.style.minHeight = "1200px";
-    tallContent.textContent = "獨立捲動測試內容";
-    left.append(tallContent);
-    await nextFrame();
-    const scrollTopBefore = regionContent.scrollTop;
-    const maxScroll = regionContent.scrollHeight - regionContent.clientHeight;
-    regionContent.scrollTop = maxScroll;
-    await nextFrame();
-    const scrollWorks = maxScroll > 0 &&
-      regionContent.scrollTop > scrollTopBefore &&
-      getComputedStyle(regionContent).overflowY === "auto";
-    regionContent.scrollTop = 0;
-    record("左側區既有獨立垂直捲動行為維持", scrollWorks);
+    let widthWorks = false;
+    if (resizeHandle) {
+      const widthBefore = left.getBoundingClientRect().width;
+      const resizeRequestBefore = container.getCoordinationSnapshot()
+        .find((item) => item.regionId === "left-region")?.requestCount ?? 0;
+      resizeHandle.setPointerCapture = () => {};
+      resizeHandle.dispatchEvent(pointer("pointerdown", 71, 200));
+      resizeHandle.dispatchEvent(pointer("pointermove", 71, 232));
+      resizeHandle.dispatchEvent(pointer("pointerup", 71, 232));
+      await nextFrame();
+      const widthAfter = left.getBoundingClientRect().width;
+      const resizeState = container.getCoordinationSnapshot()
+        .find((item) => item.regionId === "left-region");
+      widthWorks = resizeState?.requestCount > resizeRequestBefore &&
+        resizeState?.lastRequestKind === "space" &&
+        widthAfter > widthBefore + 8;
+    }
+    record("左側區寬度調整仍可提出空間需求", widthWorks);
 
-    const resizeHandle = left.shadowRoot.querySelector(
-      '[data-role="resize-handle"]'
-    );
-    const widthBefore = left.getBoundingClientRect().width;
-    const resizeRequestBefore = container.getCoordinationSnapshot()
-      .find((item) => item.regionId === "left-region")?.requestCount ?? 0;
-    resizeHandle.setPointerCapture = () => {};
-    resizeHandle.dispatchEvent(pointer("pointerdown", 71, 200));
-    resizeHandle.dispatchEvent(pointer("pointermove", 71, 232));
-    resizeHandle.dispatchEvent(pointer("pointerup", 71, 232));
-    await nextFrame();
-    const widthAfter = left.getBoundingClientRect().width;
-    const resizeState = container.getCoordinationSnapshot()
-      .find((item) => item.regionId === "left-region");
-    record(
-      "左側區既有寬度調整入口仍可提出空間需求",
-      resizeState?.requestCount > resizeRequestBefore &&
-      resizeState?.lastRequestKind === "space" &&
-      widthAfter > widthBefore + 8,
-      `寬度：${widthBefore.toFixed(1)} → ${widthAfter.toFixed(1)}`
-    );
-
-    const requestsBeforeItemOperation = container.getCoordinationSnapshot()
+    const requestCountsBefore = container.getCoordinationSnapshot()
       .map((item) => [item.regionId, item.requestCount]);
-    itemButtons[0].click();
-    const requestsAfterItemOperation = container.getCoordinationSnapshot()
+    const regionControlsOwnedLocally = Boolean(
+      regionToggle && resizeHandle &&
+      leftRoot.contains(regionToggle) &&
+      leftRoot.contains(resizeHandle) &&
+      container.shadowRoot.querySelector('[data-role="collapse-toggle"], [data-role="resize-handle"]') === null &&
+      leftRoot.querySelectorAll('[data-role="item-toggle"], [data-role="content-item"]').length === 0
+    );
+    const requestCountsAfter = container.getCoordinationSnapshot()
       .map((item) => [item.regionId, item.requestCount]);
-    itemButtons[0].click();
     record(
-      "區域內部呈現與項目操作仍由左側區自身負責",
-      left.shadowRoot.querySelectorAll('[data-role="item-toggle"]').length === 5 &&
-      container.shadowRoot.querySelector('[data-role="item-toggle"]') === null &&
-      JSON.stringify(requestsAfterItemOperation) === JSON.stringify(requestsBeforeItemOperation) &&
+      "區域內部呈現與操作由左側區自身負責，容器不接管",
+      regionControlsOwnedLocally &&
+      JSON.stringify(requestCountsAfter) === JSON.stringify(requestCountsBefore) &&
       left.getAttribute("aria-expanded") === null &&
       container.getAttribute("aria-expanded") === null
     );
