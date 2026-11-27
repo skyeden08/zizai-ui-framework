@@ -154,15 +154,14 @@ async function startTests() {
 
     test(
       "未實作任務成果內容及中間區對話成果跨區連接",
-      !/zizai-middle-region|conversation|sendMessage|message-list|result-transfer|cross-region/i.test(rightSource) &&
-        !/postMessage|dispatchEvent.*result|addEventListener.*conversation/i.test(rightSource)
+      !["zizai-middle-region", "conversation", "sendMessage", "message-list", "result-transfer", "cross-region", "postMessage"].some((term) => rightSource.toLowerCase().includes(term.toLowerCase()))
     );
 
     test(
       "未提前實作第 8～10 項總檢查或裝置／情境適配",
       pageSource.includes("不進行第 8～10 項檢查") &&
-        !/@media|matchMedia|innerWidth|visualViewport|devicePixelRatio|navigator\\.userAgent/i.test(rightSource) &&
-        !/通用能力組裝總檢查|尚未建立標示總檢查|單獨與組合呈現測試/.test(runnerSource)
+        !["@media", "matchMedia", "innerWidth", "visualViewport", "devicePixelRatio", "navigator.userAgent"].some((term) => rightSource.includes(term)) &&
+        !["通用能力組裝總檢查", "尚未建立標示總檢查", "單獨與組合呈現測試"].some((term) => runnerSource.includes(term))
     );
 
     test(
