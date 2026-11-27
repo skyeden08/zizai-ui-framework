@@ -119,6 +119,24 @@ export class RightRegion extends HTMLElement {
         display: none;
       }
 
+      .co-view-content {
+        box-sizing: border-box;
+        min-width: 0;
+        min-height: 0;
+      }
+
+      .co-view-content-label {
+        margin: 0 0 var(--ui-space-small, 0.5rem);
+        color: var(--ui-color-text, #182230);
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+
+      .co-view-content-placeholder {
+        margin: 0;
+        color: var(--ui-color-muted, #526174);
+      }
+
       .placeholder {
         margin: 0;
       }
@@ -183,13 +201,27 @@ export class RightRegion extends HTMLElement {
     content.id = "region-content";
     content.dataset.role = "region-content";
 
-    const slot = document.createElement("slot");
-    const placeholder = document.createElement("p");
-    placeholder.className = "placeholder";
-    placeholder.dataset.role = "basic-placeholder";
-    placeholder.textContent = "尚未建立";
-    slot.append(placeholder);
-    content.append(slot);
+    const coViewContent = document.createElement("section");
+    coViewContent.className = "co-view-content";
+    coViewContent.dataset.role = "co-view-content";
+    coViewContent.dataset.version = "co-view-content-1";
+    coViewContent.setAttribute("role", "region");
+    coViewContent.setAttribute("aria-label", "共視內容區");
+
+    const coViewLabel = document.createElement("h2");
+    coViewLabel.className = "co-view-content-label";
+    coViewLabel.textContent = "共視內容區";
+
+    const coViewSlot = document.createElement("slot");
+    coViewSlot.name = "co-view-content";
+    const coViewPlaceholder = document.createElement("p");
+    coViewPlaceholder.className = "co-view-content-placeholder";
+    coViewPlaceholder.dataset.role = "co-view-content-placeholder";
+    coViewPlaceholder.textContent = "尚未建立";
+    coViewSlot.append(coViewPlaceholder);
+
+    coViewContent.append(coViewLabel, coViewSlot);
+    content.append(coViewContent);
 
     frame.append(regionHeader, dropdownHeader, toolbar, content);
     root.append(style, frame);
