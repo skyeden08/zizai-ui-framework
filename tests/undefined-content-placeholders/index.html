@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>第四階段第 9 項：尚未定義的內容標示</title>
+  <link rel="stylesheet" href="../../styles/variables.css">
+  <style>
+    body { margin: 0; min-height: 100vh; color: var(--ui-color-text, #182230); font-family: var(--ui-font-family, system-ui, sans-serif); }
+    main { padding: 1rem; }
+    #fixture { width: 100%; height: 36rem; }
+    #results { min-height: 12rem; padding: 1rem; white-space: pre-wrap; line-height: 1.6; border: 1px solid var(--ui-color-border, #cbd5e1); }
+    #regression-frame { width: 100%; min-height: 32rem; border: 1px solid var(--ui-color-border, #cbd5e1); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>第四階段第 9 項：尚未定義的內容標示「尚未建立」</h1>
+    <p>本頁只檢查四區已建立但尚未定義的內容位置及既有行為回歸，不處理第四階段第 10 項、裝置／情境適配或跨區成果連接。</p>
+    <div id="fixture"></div>
+    <h2>測試結果</h2>
+    <pre id="results" aria-live="polite" data-status="loading">測試頁已載入，等待 DOM 就緒並啟動測試…</pre>
+    <h2>既有行為回歸測試</h2>
+    <div id="regression-fixture"></div>
+  </main>
+  <script type="module" src="./test-runner.js?rev=phase9-placeholders-1"></script>
+</body>
+</html>

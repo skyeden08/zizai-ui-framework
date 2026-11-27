@@ -92,6 +92,11 @@ export class RightRegion extends HTMLElement {
         display: none;
       }
 
+      .dropdown-placeholder {
+        margin: 0;
+        color: var(--ui-color-muted, #526174);
+      }
+
       .common-toolbar {
         display: flex;
         align-items: center;
@@ -180,6 +185,10 @@ export class RightRegion extends HTMLElement {
     dropdownMenu.dataset.role = "dropdown-menu";
     dropdownMenu.setAttribute("role", "menu");
     dropdownMenu.setAttribute("aria-label", "下拉選單選項（尚未建立）");
+    const dropdownPlaceholder = document.createElement("p");
+    dropdownPlaceholder.className = "dropdown-placeholder";
+    dropdownPlaceholder.textContent = "尚未建立";
+    dropdownMenu.append(dropdownPlaceholder);
     dropdownMenu.hidden = true;
 
     dropdownHeader.append(dropdownTrigger, dropdownMenu);
