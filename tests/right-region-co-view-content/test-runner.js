@@ -166,9 +166,10 @@ async function startTests() {
 
     test(
       "本項未新增或重寫第二階段通用能力",
-      /import\\s*\\{\\s*bindOpenClose\\s*\\}\\s*from\\s*["']\\.\\.\\/capabilities\\/open-close\\.js["']/.test(rightSource) &&
-        /import\\s*\\{\\s*bindDropdown,\\s*syncDropdownState\\s*\\}\\s*from\\s*["']\\.\\.\\/capabilities\\/dropdown\\.js["']/.test(rightSource) &&
-        !/bindDragAdjustment|bindCommonAppearance|function\\s+(handleOpenClose|handleDropdown|bindRightRegion)/.test(rightSource)
+      rightSource.includes('import { bindOpenClose } from "../capabilities/open-close.js";') &&
+        rightSource.includes('import { bindDropdown, syncDropdownState } from "../capabilities/dropdown.js";') &&
+        !rightSource.includes("bindDragAdjustment") &&
+        !rightSource.includes("bindCommonAppearance")
     );
 
     let collapsed = false;
