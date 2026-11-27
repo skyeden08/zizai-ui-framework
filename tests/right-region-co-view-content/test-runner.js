@@ -150,7 +150,7 @@ async function startTests() {
       new URL("../../src/components/right-region.js?rev=phase9-right-region-2", import.meta.url)
     )).text();
     const pageSource = await (await fetch(new URL("./index.html", import.meta.url))).text();
-    const runnerSource = await (await fetch(new URL("./test-runner.js?rev=co-view-content-1", import.meta.url))).text();
+    const runnerSource = await (await fetch(new URL("./test-runner.js?rev=phase9-right-region-2", import.meta.url))).text();
 
     test(
       "未實作任務成果內容及中間區對話成果跨區連接",
