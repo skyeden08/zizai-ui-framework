@@ -24,7 +24,7 @@ async function startTests(){
   if(!results||!fixture)throw Error("缺少測試結果區或掛載區");if(typeof PointerEvent!=="function")throw Error("瀏覽器不支援 PointerEvent");
   const [{LayoutContainer},{TopRegion},{LeftRegion},{MiddleRegion},{RightRegion}]=await Promise.all([
    import("../../src/components/layout-container.js"),import("../../src/components/top-region.js"),
-   import("../../src/components/left-region.js"),import("../../src/components/middle-region.js"),import("../../src/components/right-region.js")]);
+   import("../../src/components/left-region.js"),import("../../src/components/middle-region.js"),import("../../src/components/right-region.js?rev=phase9-right-region-2")]);
   for(const [n,k] of [["zizai-layout-container",LayoutContainer],["zizai-top-region",TopRegion],["zizai-left-region",LeftRegion],["zizai-middle-region",MiddleRegion],["zizai-right-region",RightRegion]])if(!customElements.get(n))customElements.define(n,k);
   const container=document.createElement("zizai-layout-container");
   const top=document.createElement("zizai-top-region"),left=document.createElement("zizai-left-region"),middle=document.createElement("zizai-middle-region"),right=document.createElement("zizai-right-region");

@@ -2,7 +2,7 @@ import { LayoutContainer } from "../../src/components/layout-container.js";
 import { TopRegion } from "../../src/components/top-region.js";
 import { LeftRegion } from "../../src/components/left-region.js";
 import { MiddleRegion } from "../../src/components/middle-region.js";
-import { RightRegion } from "../../src/components/right-region.js?rev=phase9-placeholders-1";
+import { RightRegion } from "../../src/components/right-region.js?rev=phase9-right-region-2";
 
 let started = false;
 
@@ -228,7 +228,7 @@ async function startTests() {
         readStatus();
       }, { once: true });
 
-      regressionFrame.src = "../region-resize-coordination/";
+      regressionFrame.src = "../region-resize-coordination/?rev=phase9-right-region-2";
       regressionFixture.replaceChildren(regressionFrame);
     });
 

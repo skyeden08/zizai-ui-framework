@@ -1,7 +1,7 @@
 import { LayoutContainer } from "../../src/components/layout-container.js";
 import { LeftRegion } from "../../src/components/left-region.js";
 import { MiddleRegion } from "../../src/components/middle-region.js";
-import { RightRegion } from "../../src/components/right-region.js?rev=dropdown-header-1";
+import { RightRegion } from "../../src/components/right-region.js?rev=phase9-right-region-2";
 
 let started = false;
 
@@ -119,13 +119,18 @@ async function startTests() {
       "標頭未定義內容與選項位置均標示尚未建立，未預設選項",
       trigger?.textContent.trim() === "尚未建立" &&
         menu?.hidden === true &&
-        menu?.children.length === 0 &&
+        menu?.children.length === 1 &&
+        menu?.firstElementChild?.tagName === "P" &&
+        menu?.firstElementChild?.classList.contains("dropdown-placeholder") &&
+        menu?.firstElementChild?.textContent.trim() === "尚未建立" &&
+        menu?.textContent.trim() === "尚未建立" &&
+        menu?.querySelectorAll("button, a, input, select, [role='menuitem'], [data-dropdown-option]").length === 0 &&
         menu?.getAttribute("aria-label") === "下拉選單選項（尚未建立）" &&
         !trigger?.hasAttribute("data-selected-value")
     );
 
     const rightSource = await (await fetch(
-      new URL("../../src/components/right-region.js?rev=dropdown-header-1", import.meta.url)
+      new URL("../../src/components/right-region.js?rev=phase9-right-region-2", import.meta.url)
     )).text();
     const capabilitySource = await (await fetch(
       new URL("../../src/capabilities/dropdown.js?rev=dropdown-header-1", import.meta.url)

@@ -45,7 +45,7 @@ async function startTests() {
 
     const [{ LayoutContainer }, { RightRegion }] = await Promise.all([
       import("../../src/components/layout-container.js"),
-      import("../../src/components/right-region.js")
+      import("../../src/components/right-region.js?rev=phase9-right-region-2")
     ]);
 
     if (!customElements.get("zizai-layout-container")) {

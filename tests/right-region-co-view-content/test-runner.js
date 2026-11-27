@@ -1,7 +1,7 @@
 import { LayoutContainer } from "../../src/components/layout-container.js";
 import { LeftRegion } from "../../src/components/left-region.js";
 import { MiddleRegion } from "../../src/components/middle-region.js";
-import { RightRegion } from "../../src/components/right-region.js?rev=co-view-content-1";
+import { RightRegion } from "../../src/components/right-region.js?rev=phase9-right-region-2";
 
 let started = false;
 
@@ -147,7 +147,7 @@ async function startTests() {
     );
 
     const rightSource = await (await fetch(
-      new URL("../../src/components/right-region.js?rev=co-view-content-1", import.meta.url)
+      new URL("../../src/components/right-region.js?rev=phase9-right-region-2", import.meta.url)
     )).text();
     const pageSource = await (await fetch(new URL("./index.html", import.meta.url))).text();
     const runnerSource = await (await fetch(new URL("./test-runner.js?rev=co-view-content-1", import.meta.url))).text();
