@@ -157,11 +157,37 @@ async function startTests() {
       !["zizai-middle-region", "conversation", "sendMessage", "message-list", "result-transfer", "cross-region", "postMessage"].some((term) => rightSource.toLowerCase().includes(term.toLowerCase()))
     );
 
+    const deviceAdaptationPatterns = [
+      { label: "CSS @media 規則", pattern: /@media\\s*\\(/i },
+      { label: "matchMedia 呼叫", pattern: /\\bmatchMedia\\s*\\(/ },
+      { label: "innerWidth 裝置尺寸判斷", pattern: /\\binnerWidth\\b/ },
+      { label: "visualViewport 裝置視窗判斷", pattern: /\\bvisualViewport\\b/ },
+      { label: "devicePixelRatio 螢幕倍率判斷", pattern: /\\bdevicePixelRatio\\b/ },
+      { label: "navigator.userAgent 裝置識別", pattern: /\\bnavigator\\s*\\.\\s*userAgent\\b/ }
+    ];
+    const detectedDeviceAdaptations = deviceAdaptationPatterns
+      .filter(({ pattern }) => pattern.test(rightSource))
+      .map(({ label }) => label);
+
+    const phaseEightToTenTestPatterns = [
+      { label: "通用能力組裝總檢查", pattern: /test\\s*\\(\\s*["'`][^"'`]*通用能力組裝總檢查[^"'`]*["'`]\\s*,\\s*([^,)]+)/s },
+      { label: "尚未建立標示總檢查", pattern: /test\\s*\\(\\s*["'`][^"'`]*尚未建立標示總檢查[^"'`]*["'`]\\s*,\\s*([^,)]+)/s },
+      { label: "單獨與組合呈現測試", pattern: /test\\s*\\(\\s*["'`][^"'`]*單獨與組合呈現測試[^"'`]*["'`]\\s*,\\s*([^,)]+)/s }
+    ];
+    const detectedPhaseEightToTenTests = phaseEightToTenTestPatterns
+      .filter(({ pattern }) => pattern.test(runnerSource))
+      .map(({ label }) => label);
+
+    const scopeViolations = [
+      ...detectedDeviceAdaptations,
+      ...detectedPhaseEightToTenTests
+    ];
     test(
       "未提前實作第 8～10 項總檢查或裝置／情境適配",
-      pageSource.includes("不進行第 8～10 項檢查") &&
-        !["@media", "matchMedia", "innerWidth", "visualViewport", "devicePixelRatio", "navigator.userAgent"].some((term) => rightSource.includes(term)) &&
-        !["通用能力組裝總檢查", "尚未建立標示總檢查", "單獨與組合呈現測試"].some((term) => runnerSource.includes(term))
+      detectedDeviceAdaptations.length === 0 && detectedPhaseEightToTenTests.length === 0,
+      scopeViolations.length
+        ? `發現提前實作：${scopeViolations.join("、")}`
+        : "未發現裝置適配程式或第 8～10 項測試執行案例"
     );
 
     test(
