@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>第四階段第 6 項：右側區建立常用工具列位置</title>
+    <link rel="stylesheet" href="../../styles/variables.css" />
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--ui-color-text, #182230);
+        font-family: var(--ui-font-family, system-ui, sans-serif);
+      }
+      main { padding: 1rem; }
+      #fixture { width: 100%; height: 36rem; }
+      #results {
+        min-height: 12rem;
+        padding: 1rem;
+        white-space: pre-wrap;
+        line-height: 1.6;
+        border: 1px solid var(--ui-color-border, #cbd5e1);
+      }
+    </style>
+    <script>
+      (() => {
+        window.__rightToolbarTestCompleted = 0;
+        window.__rightToolbarTestLines = [];
+        window.__rightToolbarReportError = (message) => {
+          const write = () => {
+            const results = document.getElementById("results");
+            if (!results) return;
+            results.textContent = [
+              ...(window.__rightToolbarTestLines || []),
+              `ERROR  ${message}`,
+              `已完成：${window.__rightToolbarTestCompleted || 0} 項`
+            ].join("\n");
+            results.dataset.status = "error";
+          };
+          if (document.getElementById("results")) write();
+          else document.addEventListener("DOMContentLoaded", write, { once: true });
+        };
+        window.addEventListener("error", (event) => {
+          window.__rightToolbarReportError(
+            event.target instanceof HTMLScriptElement
+              ? `腳本載入或模組解析失敗：${event.target.src || "未知來源"}`
+              : event.message || "發生未捕捉的執行錯誤"
+          );
+        }, true);
+        window.addEventListener("unhandledrejection", (event) => {
+          const reason = event.reason instanceof Error
+            ? `${event.reason.name}: ${event.reason.message}`
+            : String(event.reason);
+          window.__rightToolbarReportError(`未處理的 Promise 錯誤：${reason}`);
+        });
+      })();
+    </script>
+  </head>
+  <body>
+    <main>
+      <h1>第四階段第 6 項：右側區建立常用工具列位置</h1>
+      <p>本頁只驗證常用工具列位置與既有區域行為；不建立具體工具項目、共視內容區、裝置適配或跨區連接。</p>
+      <div id="fixture"></div>
+      <h2>測試結果</h2>
+      <pre id="results" aria-live="polite" data-status="loading">測試頁已載入，等待 DOM 就緒並啟動測試…</pre>
+    </main>
+    <script type="module" src="./test-runner.js?rev=common-toolbar-1"></script>
+  </body>
+</html>
