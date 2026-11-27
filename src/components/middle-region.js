@@ -1,5 +1,6 @@
 import { bindOpenClose } from "../capabilities/open-close.js";
 import { bindDragAdjustment } from "../capabilities/drag-adjustment.js";
+import { bindDropdown, syncDropdownState } from "../capabilities/dropdown.js";
 
 /**
  * 中間區 owns its collapse state, width state, and operation triggers.
@@ -9,6 +10,8 @@ export class MiddleRegion extends HTMLElement {
   #expanded = true;
   #width = null;
   #dragStartWidth = null;
+  #dropdownExpanded = false;
+  #selectedDropdownValue = null;
   #bindings = [];
 
   connectedCallback() {
@@ -64,6 +67,48 @@ export class MiddleRegion extends HTMLElement {
 
       .collapse-toggle {
         flex: none;
+      }
+
+      .dropdown-header {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: var(--ui-space-small, 0.5rem);
+        min-width: 0;
+        margin-block-start: var(--ui-space-small, 0.5rem);
+        padding-block: var(--ui-space-small, 0.25rem);
+        border-block: 1px solid var(--ui-color-border, #cbd5e1);
+      }
+
+      .dropdown-trigger {
+        max-width: 100%;
+      }
+
+      .dropdown-menu {
+        position: absolute;
+        z-index: 1;
+        inset-block-start: 100%;
+        inset-inline-start: 0;
+        min-width: 10rem;
+        padding: var(--ui-space-small, 0.5rem);
+        background: var(--ui-color-surface, #ffffff);
+        border: 1px solid var(--ui-color-border, #cbd5e1);
+      }
+
+      .dropdown-menu[hidden] {
+        display: none;
+      }
+
+      .dropdown-option {
+        display: block;
+        width: 100%;
+        padding: var(--ui-space-small, 0.5rem);
+        text-align: start;
+        color: inherit;
+        background: transparent;
+        border: 0;
+        cursor: pointer;
       }
 
       .region-content {
@@ -129,6 +174,35 @@ export class MiddleRegion extends HTMLElement {
 
     toolbar.append(label, toggle);
 
+    const dropdownHeader = document.createElement("header");
+    dropdownHeader.className = "dropdown-header";
+    dropdownHeader.dataset.role = "dropdown-header";
+    dropdownHeader.setAttribute("aria-label", "需求主題");
+
+    const dropdownTrigger = document.createElement("button");
+    dropdownTrigger.className = "dropdown-trigger";
+    dropdownTrigger.type = "button";
+    dropdownTrigger.dataset.role = "dropdown-trigger";
+    dropdownTrigger.setAttribute("aria-controls", "middle-region-dropdown-menu");
+    dropdownTrigger.textContent = "需求主題：尚未建立";
+
+    const dropdownMenu = document.createElement("div");
+    dropdownMenu.className = "dropdown-menu";
+    dropdownMenu.id = "middle-region-dropdown-menu";
+    dropdownMenu.dataset.role = "dropdown-menu";
+    dropdownMenu.setAttribute("role", "menu");
+    dropdownMenu.setAttribute("aria-label", "需求主題選項");
+    dropdownMenu.hidden = true;
+
+    const uncreatedOption = document.createElement("button");
+    uncreatedOption.className = "dropdown-option";
+    uncreatedOption.type = "button";
+    uncreatedOption.dataset.dropdownOption = "not-created";
+    uncreatedOption.setAttribute("role", "menuitem");
+    uncreatedOption.textContent = "尚未建立";
+    dropdownMenu.append(uncreatedOption);
+    dropdownHeader.append(dropdownTrigger, dropdownMenu);
+
     const content = document.createElement("div");
     content.className = "region-content";
     content.id = "region-content";
@@ -172,7 +246,7 @@ export class MiddleRegion extends HTMLElement {
     resizeHandle.setAttribute("aria-label", "調整中間區寬度");
     resizeHandle.tabIndex = 0;
 
-    frame.append(toolbar, content, resizeHandle);
+    frame.append(toolbar, dropdownHeader, content, resizeHandle);
     root.append(style, frame);
   }
 
@@ -180,6 +254,8 @@ export class MiddleRegion extends HTMLElement {
     const toggle = this.shadowRoot.querySelector('[data-role="collapse-toggle"]');
     const content = this.shadowRoot.querySelector("#region-content");
     const resizeHandle = this.shadowRoot.querySelector('[data-role="resize-handle"]');
+    const dropdownTrigger = this.shadowRoot.querySelector('[data-role="dropdown-trigger"]');
+    const dropdownMenu = this.shadowRoot.querySelector('[data-role="dropdown-menu"]');
 
     this.#bindings.push(
       bindOpenClose({
@@ -191,6 +267,26 @@ export class MiddleRegion extends HTMLElement {
           });
           this.#expanded = nextExpanded;
           content.hidden = !nextExpanded;
+        }
+      })
+    );
+
+    this.#bindings.push(
+      bindDropdown({
+        trigger: dropdownTrigger,
+        menu: dropdownMenu,
+        getExpanded: () => this.#dropdownExpanded,
+        onExpandedChange: (nextExpanded) => {
+          this.#dropdownExpanded = nextExpanded;
+          dropdownMenu.hidden = !nextExpanded;
+        },
+        onSelect: (value, option) => {
+          this.#selectedDropdownValue = value;
+          dropdownTrigger.dataset.selectedValue = value;
+          dropdownTrigger.textContent = `需求主題：${option.textContent.trim()}`;
+          this.#dropdownExpanded = false;
+          dropdownMenu.hidden = true;
+          syncDropdownState(dropdownTrigger, false);
         }
       })
     );
