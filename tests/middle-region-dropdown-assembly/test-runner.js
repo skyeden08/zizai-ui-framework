@@ -73,13 +73,41 @@ async function startTests() {
     }
     test("左、中、右區既有區域級開合仍正常",allCollapse);
     const leftHandle=left.shadowRoot.querySelector('[data-role="resize-handle"]'),middleHandle=mr.querySelector('[data-role="resize-handle"]');
-    const before=[width(left),width(middle),width(right)];
-    if(leftHandle)drag(leftHandle,501,180,200);await frame();
-    const leftDrag=!!leftHandle&&width(left)>before[0]+8&&near(width(middle),before[1])&&near(width(right),before[2]);
-    const midBefore=[width(left),width(middle),width(right)];
-    if(middleHandle)drag(middleHandle,502,300,270);await frame();
-    const middleDrag=!!middleHandle&&width(middle)<midBefore[1]-8&&width(right)>midBefore[2]+8&&near(width(left),midBefore[0]);
-    test("左／中拖曳調整仍正常，僅影響相鄰區域",leftDrag&&middleDrag);
+    const dragFailures=[];
+    const containerWidth=width(container);
+    const leftEdge=left.getBoundingClientRect().left;
+    const rightEdge=right.getBoundingClientRect().right;
+    const checkDivider=async(label,handle,id,first,second,third,dx,firstDirection)=>{
+      if(!handle){dragFailures.push(`${label}：找不到拖曳把手`);return;}
+      const before=[width(left),width(middle),width(right)];
+      const pairBefore=before[first]+before[second];
+      drag(handle,id,200,200+dx);
+      await frame();
+      const after=[width(left),width(middle),width(right)];
+      const firstDelta=after[first]-before[first];
+      const secondDelta=after[second]-before[second];
+      const firstOk=firstDirection>0?firstDelta>8:firstDelta< -8;
+      const secondOk=firstDirection>0?secondDelta< -8:secondDelta>8;
+      const pairOk=near(after[first]+after[second],pairBefore);
+      const thirdOk=near(after[third],before[third]);
+      const outerOk=near(width(container),containerWidth)&&
+        near(left.getBoundingClientRect().left,leftEdge)&&
+        near(right.getBoundingClientRect().right,rightEdge);
+      for(const [condition,ok] of [
+        ["第一相鄰區依拖曳方向變化",firstOk],
+        ["第二相鄰區反向變化",secondOk],
+        ["兩相鄰區總寬不變",pairOk],
+        ["非相鄰區寬度不變",thirdOk],
+        ["整體寬度及左右外側邊界固定",outerOk]
+      ]) if(!ok) dragFailures.push(`${label}：${condition}（前 ${before.map(x=>x.toFixed(1)).join(" / ")}；後 ${after.map(x=>x.toFixed(1)).join(" / ")}）`);
+    };
+    const leftMiddleWidth=width(left)+width(middle);
+    await checkDivider("左／中往右",leftHandle,501,0,1,2,leftMiddleWidth*0.08,1);
+    await checkDivider("左／中往左",leftHandle,502,0,1,2,-(width(left)+width(middle))*0.04,-1);
+    const middleRightWidth=width(middle)+width(right);
+    await checkDivider("中／右往右",middleHandle,503,1,2,0,middleRightWidth*0.06,1);
+    await checkDivider("中／右往左",middleHandle,504,1,2,0,-(width(middle)+width(right))*0.03,-1);
+    test("左／中拖曳調整仍正常，僅影響相鄰區域",dragFailures.length===0,dragFailures.join("；"));
     test("左、中、右區初始寬度維持 2:4:4",initial.every(x=>x>0)&&near(initial[1]/initial[0],2,.05)&&near(initial[2]/initial[0],2,.05),initial.map(x=>x.toFixed(1)).join(" / "));
     test("原有對話呈現位置與對話輸入位置未受影響",!!conversation&&!!input&&conversation.getAttribute("aria-label")==="對話呈現位置"&&input.getAttribute("aria-label")==="對話輸入位置"&&conversation.querySelector("slot[name='conversation']")&&input.querySelector("slot[name='input']")&&content.contains(conversation)&&content.contains(input));
     const source=await (await fetch(new URL("../../src/components/middle-region.js?rev=phase8-dropdown-1",import.meta.url))).text();
