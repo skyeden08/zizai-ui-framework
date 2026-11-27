@@ -2,7 +2,7 @@ import { bindOpenClose } from "../capabilities/open-close.js";
 import { bindDropdown, syncDropdownState } from "../capabilities/dropdown.js";
 
 /**
- * 右側區 owns its presentation, dropdown content and interaction state.
+ * 右側區 owns its presentation, dropdown content, toolbar placeholder and interaction state.
  * The container receives only region-level layout and collapse requests.
  */
 export class RightRegion extends HTMLElement {
@@ -92,6 +92,20 @@ export class RightRegion extends HTMLElement {
         display: none;
       }
 
+      .common-toolbar {
+        display: flex;
+        align-items: center;
+        flex: none;
+        min-width: 0;
+        margin-block-start: var(--ui-space-small, 0.5rem);
+        padding: var(--ui-space-small, 0.5rem);
+        border: 1px solid var(--ui-color-border, #cbd5e1);
+      }
+
+      .common-toolbar-placeholder {
+        margin: 0;
+      }
+
       .region-content {
         box-sizing: border-box;
         flex: 1 1 auto;
@@ -112,7 +126,7 @@ export class RightRegion extends HTMLElement {
 
     const frame = document.createElement("section");
     frame.className = "region-frame";
-    frame.dataset.rightRegionVersion = "dropdown-header-1";
+    frame.dataset.rightRegionVersion = "common-toolbar-1";
     frame.setAttribute("aria-label", "右側區（共視區）");
 
     const regionHeader = document.createElement("header");
@@ -152,6 +166,18 @@ export class RightRegion extends HTMLElement {
 
     dropdownHeader.append(dropdownTrigger, dropdownMenu);
 
+    const toolbar = document.createElement("div");
+    toolbar.className = "common-toolbar";
+    toolbar.dataset.role = "common-toolbar";
+    toolbar.setAttribute("role", "toolbar");
+    toolbar.setAttribute("aria-label", "常用工具列");
+
+    const toolbarPlaceholder = document.createElement("p");
+    toolbarPlaceholder.className = "common-toolbar-placeholder";
+    toolbarPlaceholder.dataset.role = "common-toolbar-placeholder";
+    toolbarPlaceholder.textContent = "尚未建立";
+    toolbar.append(toolbarPlaceholder);
+
     const content = document.createElement("div");
     content.className = "region-content";
     content.id = "region-content";
@@ -165,7 +191,7 @@ export class RightRegion extends HTMLElement {
     slot.append(placeholder);
     content.append(slot);
 
-    frame.append(regionHeader, dropdownHeader, content);
+    frame.append(regionHeader, dropdownHeader, toolbar, content);
     root.append(style, frame);
   }
 
